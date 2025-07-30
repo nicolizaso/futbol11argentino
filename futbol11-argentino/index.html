@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fútbol 11 Argentino</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #ffffff;
+      color: #0D1B2A;
+      padding: 40px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 48px;
+      font-weight: bold;
+      margin-bottom: 40px;
+    }
+    .menu-juegos {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 30px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .juego-card {
+      border: 2px solid #0D1B2A;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 250px;
+      margin: auto;
+    }
+    .juego-card h2 {
+      margin-bottom: 10px;
+      font-size: 20px;
+    }
+    .juego-card button {
+      display: block;
+      width: 90%;
+      padding: 10px;
+      margin: 10px auto 0;
+      font-size: 16px;
+      background-color: #0D1B2A;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    .juego-card button:hover {
+      background-color: #14314e;
+    }
+  </style>
+</head>
+<body>
+  <h1>Fútbol 11 Argentino</h1>
+  <div class="menu-juegos">
+    <div class="juego-card">
+      <h2>Jugadores en Común</h2>
+      <button onclick="window.location.href='jugadoresencomun'">Jugar</button>
+    </div>
+    <div class="juego-card">
+      <h2>Desafío Argentino</h2>
+      <button onclick="window.location.href='juego2'">Jugar</button>
+    </div>
+    <div class="juego-card">
+      <h2>Juego 3</h2>
+      <button onclick="window.location.href='juego3'">Jugar</button>
+    </div>
+    <div class="juego-card">
+      <h2>Juego 4</h2>
+      <button onclick="window.location.href='juego4'">Jugar</button>
+    </div>
+    <div class="juego-card">
+      <h2>Juego 5</h2>
+      <button onclick="window.location.href='juego5'">Jugar</button>
+    </div>
+  </div>
+</body>
+</html>
