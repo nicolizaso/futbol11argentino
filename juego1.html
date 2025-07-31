@@ -4,80 +4,63 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jugadores en Común - Fútbol 11 Argentino</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #0D1B2A;
-      color: white;
-      padding: 30px;
-      text-align: center;
-    }
-    h1 {
-      color: #A67C00;
-      margin-bottom: 10px;
-    }
-    .intro {
-      max-width: 600px;
-      margin: 0 auto 30px;
-      padding: 20px;
-      background-color: #1e2a38;
-      border: 2px solid #A67C00;
-      border-radius: 10px;
-    }
-    .modo-buttons button {
-      margin: 10px;
-      padding: 10px 20px;
-      font-size: 16px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .modo-buttons .selected {
-      background-color: #00bcd4;
-      color: black;
-    }
-    .modo-buttons .unselected {
-      background-color: #444;
-      color: white;
-    }
-    .start-button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 18px;
-      background-color: #ffc107;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    #juegoContainer {
-      display: none;
-    }
-    .equipos {
-      display: flex;
-      justify-content: center;
-      gap: 50px;
-      margin: 20px 0;
-    }
-    input[type="text"], select {
-      padding: 10px;
-      font-size: 16px;
-      width: 80%;
-      margin-bottom: 10px;
-    }
-    table {
-      margin: auto;
-      border-collapse: collapse;
-      width: 50%;
-    }
-    th, td {
-      border: 1px solid white;
-      padding: 10px;
-    }
-    .mensaje {
-      color: red;
-      margin-bottom: 15px;
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Rubik&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header>Fútbol 11 Argentino</header>
+
+  <div class="container" id="introContainer">
+    <h1 class="titulo-juego">JUGADORES EN COMÚN</h1>
+    <div class="intro-flex">
+      <img src="img/logos juegos/IMG-Juego1.jpg" alt="Imagen Juego 1" class="intro-img">
+      <div class="intro-texto">
+        <h2>¿Cómo se juega?</h2>
+        <p>Tu misión es encontrar jugadores que hayan jugado en los dos equipos presentados. Tené cuidado: algunos nombres pueden engañar.</p>
+        <p>Seleccioná un modo de juego:</p>
+        <div class="modo-selector">
+          <div class="modo-buttons">
+            <button id="modoNormal" class="unselected">Desafío Diario</button>
+            <button id="modoNivel" class="unselected">Niveles</button>
+          </div>
+          <button id="startGame" class="start-button btn-alineado">Comenzar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- updated section of juegoContainer -->
+<div class="container" id="juegoContainer" style="display: none;">
+  <div class="equipos">
+    <div id="equipo1">⚽</div>
+    <div id="equipo2">⚽</div>
+  </div>
+
+  <div id="nivelSelectorContainer" style="margin: 20px 0; display: none; text-align: center;">
+    <label for="nivelSelect">Seleccioná un equipo:</label>
+    <select id="nivelSelect" style="width: 250px;"></select>
+    <button onclick="cargarNivelSeleccionado()">Cargar nivel</button>
+  </div>
+
+  <div id="inputsJuego" style="display: none;">
+    <div class="mensaje" id="mensaje" style="text-align: center;"></div>
+    <input type="text" id="jugadorInput" placeholder="Escribí el nombre del jugador...">
+    <button onclick="verificarJugador()">Enviar</button>
+    <div id="listaJugadores"></div>
+  </div>
+</div>
+
+
+  <!-- Popup de victoria -->
+  <div id="mensajeVictoria" class="popup-victoria" style="display: none;">
+    <div class="popup-contenido">
+      <h2>✨ ¡Felicidades, lo pasaste! ✨</h2>
+      <button onclick="window.location.href='index.html'">Volver al menú</button>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { getFirestore, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
@@ -102,10 +85,12 @@
     const mensajeDiv = document.getElementById('mensaje');
     const equipo1Div = document.getElementById('equipo1');
     const equipo2Div = document.getElementById('equipo2');
-    const tabla = document.getElementById('tablaJugadores');
     const selectorContainer = document.getElementById('nivelSelectorContainer');
     const selector = document.getElementById('nivelSelect');
     const juegoContainer = document.getElementById('juegoContainer');
+    const listaJugadores = document.getElementById('listaJugadores');
+    const mensajeVictoria = document.getElementById('mensajeVictoria');
+    const inputsJuego = document.getElementById('inputsJuego');
 
     document.getElementById('modoNormal').addEventListener('click', () => seleccionarModo('diario'));
     document.getElementById('modoNivel').addEventListener('click', () => seleccionarModo('nivel'));
@@ -124,20 +109,24 @@
       if (!modoSeleccionado) return alert('Seleccioná un modo');
       document.getElementById('introContainer').style.display = 'none';
       juegoContainer.style.display = 'block';
-      if (modoSeleccionado === 'diario') cargarDesafioDiario();
-      else if (modoSeleccionado === 'nivel') {
+      if (modoSeleccionado === 'diario') {
+        cargarDesafioDiario();
+        inputsJuego.style.display = 'block';
+      } else if (modoSeleccionado === 'nivel') {
         selectorContainer.style.display = 'block';
         await cargarNiveles();
       }
     });
 
     async function cargarNiveles() {
+      selector.innerHTML = '';
+      niveles = [];
       const querySnapshot = await getDocs(collection(db, "niveles"));
-      querySnapshot.forEach((doc, i) => {
+      querySnapshot.forEach((doc) => {
         const data = doc.data();
         niveles.push(data);
         const option = document.createElement('option');
-        option.value = i;
+        option.value = niveles.length - 1;
         option.textContent = data.nombre;
         selector.appendChild(option);
       });
@@ -159,12 +148,13 @@
     }
 
     window.cargarNivelSeleccionado = function cargarNivelSeleccionado() {
-      const nivel = niveles[selector.value];
+      const nivel = niveles[parseInt(selector.value)];
       if (!nivel) return;
       equipo1Div.textContent = nivel.equipo1;
       equipo2Div.textContent = nivel.equipo2;
       jugadoresValidos = nivel.jugadores.map(j => j.toLowerCase());
       selectorContainer.style.display = 'none';
+      inputsJuego.style.display = 'block';
     }
 
     window.verificarJugador = function verificarJugador() {
@@ -179,50 +169,20 @@
       }
       if (jugadoresValidos.includes(nombre)) {
         jugadoresEncontrados.push(nombre);
-        const fila = document.createElement('tr');
-        fila.innerHTML = `<td>${jugadoresEncontrados.length}</td><td>${nombre}</td>`;
-        tabla.appendChild(fila);
+        if (listaJugadores.textContent.length > 0) {
+          listaJugadores.textContent += ' ; ';
+        }
+        listaJugadores.textContent += nombre;
         input.value = '';
+
+        if (jugadoresEncontrados.length === jugadoresValidos.length) {
+          juegoContainer.style.display = 'none';
+          mensajeVictoria.classList.add('popup-activo');
+        }
       } else {
         mensajeDiv.textContent = 'Jugador incorrecto.';
       }
     }
   </script>
-</head>
-<body>
-  <h1>JUGADORES EN COMÚN</h1>
-  <div id="introContainer" class="intro">
-    <p>Tu misión es encontrar jugadores que hayan jugado en los dos equipos presentados. Tené cuidado: algunos nombres pueden engañar.</p>
-    <p>Seleccioná tu modo de juego:</p>
-    <div class="modo-buttons">
-      <button id="modoNormal" class="unselected">Desafío Diario</button>
-      <button id="modoNivel" class="unselected">Nivel</button>
-    </div>
-    <button id="startGame" class="start-button">Comenzar</button>
-  </div>
-
-  <div id="juegoContainer">
-    <div class="equipos">
-      <div id="equipo1">⚽</div>
-      <div id="equipo2">⚽</div>
-    </div>
-
-    <div id="nivelSelectorContainer" style="margin-bottom: 20px; display: none;">
-      <label for="nivelSelect">Seleccioná un nivel:</label>
-      <select id="nivelSelect"></select>
-      <button onclick="cargarNivelSeleccionado()">Cargar nivel</button>
-    </div>
-
-    <div class="mensaje" id="mensaje"></div>
-    <input type="text" id="jugadorInput" placeholder="Escribí el nombre del jugador...">
-    <button onclick="verificarJugador()">Enviar</button>
-
-    <table>
-      <thead>
-        <tr><th>#</th><th>Jugador</th></tr>
-      </thead>
-      <tbody id="tablaJugadores"></tbody>
-    </table>
-  </div>
 </body>
 </html>

@@ -4,49 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel de Administración - Fútbol 11 Argentino</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Rubik&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #0D1B2A;
-      color: white;
-      padding: 40px;
-    }
-    h1 {
-      color: #A67C00;
-    }
-    label, select, input, textarea, button {
-      display: block;
-      width: 100%;
-      margin-bottom: 15px;
-    }
-    input, select, textarea {
-      padding: 10px;
-      border-radius: 5px;
-      border: none;
-    }
-    button {
-      background-color: #A67C00;
-      color: white;
+    .success-message {
+      color: #00ff99;
       font-weight: bold;
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .container {
-      max-width: 600px;
-      margin: auto;
-      background-color: #1e2a38;
-      padding: 30px;
-      border-radius: 8px;
-    }
-    .section {
-      margin-top: 40px;
+      margin-top: 10px;
+      text-align: center;
     }
   </style>
+
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFirestore, collection, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyCmKCofXzl05FtXPF5doBMvCf-rY-0aGFE",
@@ -68,15 +42,24 @@
       const equipo2 = document.getElementById('equipo2').value;
       const jugadores = document.getElementById('jugadores').value.split(',').map(j => j.trim());
 
+      if (!fecha || !juego || !equipo1 || !equipo2 || jugadores.length === 0) {
+        alert('Completá todos los campos.');
+        return;
+      }
+
+      const [yyyy, mm, dd] = fecha.split('-');
+      const juegoId = `Juego${juego.split('-').pop()}-${dd}-${mm}-${yyyy}`;
+
       try {
-        await addDoc(collection(db, 'desafios-diarios'), {
+        await setDoc(doc(db, 'desafios-diarios', juegoId), {
           juego,
           fecha,
           equipo1,
           equipo2,
           jugadores
         });
-        alert('Desafío diario guardado correctamente.');
+        document.getElementById('mensajeConfirmacion').style.display = 'block';
+        setTimeout(() => window.location.reload(), 1500);
       } catch (error) {
         console.error('Error al guardar desafío:', error);
         alert('Hubo un error al guardar el desafío.');
@@ -90,20 +73,23 @@
       const equipo2 = document.getElementById('nivelEquipo2').value;
       const jugadores = document.getElementById('nivelJugadores').value.split(',').map(j => j.trim());
 
-      if (!nombre) {
-        alert('Ingresá un nombre de nivel.');
+      if (!nombre || !juego || !equipo1 || !equipo2 || jugadores.length === 0) {
+        alert('Completá todos los campos.');
         return;
       }
 
+      const nivelId = `${equipo1.replace(/\s+/g, '')}${nombre.replace(/\s+/g, '')}`;
+
       try {
-        await addDoc(collection(db, 'niveles'), {
+        await setDoc(doc(db, 'niveles', nivelId), {
           juego,
           nombre,
           equipo1,
           equipo2,
           jugadores
         });
-        alert('Nivel guardado correctamente.');
+        document.getElementById('mensajeConfirmacion').style.display = 'block';
+        setTimeout(() => window.location.reload(), 1500);
       } catch (error) {
         console.error('Error al guardar nivel:', error);
         alert('Hubo un error al guardar el nivel.');
@@ -112,6 +98,10 @@
   </script>
 </head>
 <body>
+  <div id="mensajeConfirmacion" class="success-message" style="display: none;">
+    ✅ Desafío guardado correctamente
+  </div>
+
   <div class="container">
     <h1>Panel de Administración</h1>
 
@@ -119,7 +109,7 @@
       <h2>Desafío Diario</h2>
       <label for="juego">Juego:</label>
       <select id="juego">
-        <option value="jugadores-en-comun">Jugadores en Común</option>
+        <option value="juego1">Jugadores en Común</option>
       </select>
 
       <label for="fecha">Fecha del desafío diario:</label>
@@ -141,7 +131,7 @@
       <h2>Crear Nivel</h2>
       <label for="nivelJuego">Juego:</label>
       <select id="nivelJuego">
-        <option value="jugadores-en-comun">Jugadores en Común</option>
+        <option value="juego1">Jugadores en Común</option>
       </select>
 
       <label for="nivelNombre">Nombre del nivel:</label>
