@@ -88,7 +88,7 @@ th, td {
   width: 100%;
   height: 160px;
   object-fit: cover;
-    border-radius: 6px;
+  border-radius: 6px;
 }
 
 .juego-card h2 {
@@ -153,9 +153,8 @@ header {
 }
 
 #jugadorInput {
-  width: 60%;
-  display: block;
-  margin: 20px auto 10px;
+  width: auto;
+  margin: 0;
   text-align: center;
 }
 
@@ -265,4 +264,23 @@ img {
 }
 .popup-activo {
   display: flex !important;
+}
+
+/* INPUT Y BOTÓN ALINEADOS */
+.input-jugador-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+}
+
+.input-jugador-container input[type="text"] {
+  margin: 0;
+  width: 300px;
+  max-width: 100%;
+}
+
+.input-jugador-container button {
+  margin: 0;
+  height: 100%;
 }
