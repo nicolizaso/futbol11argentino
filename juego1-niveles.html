@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Niveles - Jugadores en Común</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Rubik&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header>Fútbol 11 Argentino</header>
+
+  <div class="container" style="text-align: center;">
+    <h1 class="titulo-juego">Niveles</h1>
+    <div style="overflow-x:auto; display: flex; justify-content: center;">
+      <table>
+        <thead>
+          <tr>
+            <th>Equipo</th>
+            <th>Nivel 1</th>
+            <th>Nivel 2</th>
+            <th>Nivel 3</th>
+            <th>Nivel 4</th>
+            <th>Nivel 5</th>
+            <th>Nivel 6</th>
+            <th>Nivel 7</th>
+            <th>Nivel 8</th>
+            <th>Nivel 9</th>
+            <th>Nivel 10</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>river</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td></tr>
+          <tr><td>boca</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td></tr>
+          <tr><td>indepte</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td></tr>
+          <tr><td>racing</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td></tr>
+          <tr><td>san lorenzo</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td></tr>
+          <tr><td>huracan</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top: 20px; font-size: 20px;">Completados: <span id="completados">0</span>/60</p>
+
+    <!-- NUEVOS SELECTORES -->
+    <div style="margin-top: 20px; display: flex; justify-content: center; gap: 20px;">
+      <div>
+        <label for="selectorEquipo">Equipo:</label><br>
+        <select id="selectorEquipo">
+          <option value="river">River</option>
+          <option value="boca">Boca</option>
+          <option value="indepte">Indepte</option>
+          <option value="racing">Racing</option>
+          <option value="san lorenzo">San Lorenzo</option>
+          <option value="huracan">Huracán</option>
+        </select>
+      </div>
+      <div>
+        <label for="selectorNivel">Nivel:</label><br>
+        <select id="selectorNivel">
+          <option value="1">Nivel 1</option>
+          <option value="2">Nivel 2</option>
+          <option value="3">Nivel 3</option>
+          <option value="4">Nivel 4</option>
+          <option value="5">Nivel 5</option>
+          <option value="6">Nivel 6</option>
+          <option value="7">Nivel 7</option>
+          <option value="8">Nivel 8</option>
+          <option value="9">Nivel 9</option>
+          <option value="10">Nivel 10</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    const completadosSpan = document.getElementById('completados');
+
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', () => {
+        const total = Array.from(checkboxes).filter(c => c.checked).length;
+        completadosSpan.textContent = total;
+      });
+    });
+  </script>
+</body>
+</html>

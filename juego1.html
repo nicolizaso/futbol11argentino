@@ -23,37 +23,27 @@
         <div class="modo-selector">
           <div class="modo-buttons">
             <button id="modoNormal" class="unselected">Desafío Diario</button>
-            <button id="modoNivel" class="unselected">Niveles</button>
+            <button onclick="window.location.href='juego1-niveles.html'" class="unselected">Niveles</button>
           </div>
-          <button id="startGame" class="start-button btn-alineado">Comenzar</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- updated section of juegoContainer -->
-<div class="container" id="juegoContainer" style="display: none;">
-  <div class="equipos">
-    <div id="equipo1">⚽</div>
-    <div id="equipo2">⚽</div>
+  <div class="container" id="juegoContainer" style="display: none;">
+    <div class="equipos">
+      <div id="equipo1">⚽</div>
+      <div id="equipo2">⚽</div>
+    </div>
+
+    <div id="inputsJuego" style="display: none;">
+      <div class="mensaje" id="mensaje" style="text-align: center;"></div>
+      <input type="text" id="jugadorInput" placeholder="Escribí el nombre del jugador...">
+      <button onclick="verificarJugador()">Enviar</button>
+      <div id="listaJugadores"></div>
+    </div>
   </div>
 
-  <div id="nivelSelectorContainer" style="margin: 20px 0; display: none; text-align: center;">
-    <label for="nivelSelect">Seleccioná un equipo:</label>
-    <select id="nivelSelect" style="width: 250px;"></select>
-    <button onclick="cargarNivelSeleccionado()">Cargar nivel</button>
-  </div>
-
-  <div id="inputsJuego" style="display: none;">
-    <div class="mensaje" id="mensaje" style="text-align: center;"></div>
-    <input type="text" id="jugadorInput" placeholder="Escribí el nombre del jugador...">
-    <button onclick="verificarJugador()">Enviar</button>
-    <div id="listaJugadores"></div>
-  </div>
-</div>
-
-
-  <!-- Popup de victoria -->
   <div id="mensajeVictoria" class="popup-victoria" style="display: none;">
     <div class="popup-contenido">
       <h2>✨ ¡Felicidades, lo pasaste! ✨</h2>
@@ -80,62 +70,28 @@
 
     let jugadoresValidos = [];
     let jugadoresEncontrados = [];
-    let niveles = [];
 
     const mensajeDiv = document.getElementById('mensaje');
     const equipo1Div = document.getElementById('equipo1');
     const equipo2Div = document.getElementById('equipo2');
-    const selectorContainer = document.getElementById('nivelSelectorContainer');
-    const selector = document.getElementById('nivelSelect');
     const juegoContainer = document.getElementById('juegoContainer');
     const listaJugadores = document.getElementById('listaJugadores');
     const mensajeVictoria = document.getElementById('mensajeVictoria');
     const inputsJuego = document.getElementById('inputsJuego');
 
-    document.getElementById('modoNormal').addEventListener('click', () => seleccionarModo('diario'));
-    document.getElementById('modoNivel').addEventListener('click', () => seleccionarModo('nivel'));
-
-    let modoSeleccionado = '';
-
-    function seleccionarModo(modo) {
-      modoSeleccionado = modo;
-      document.getElementById('modoNormal').classList.toggle('selected', modo === 'diario');
-      document.getElementById('modoNormal').classList.toggle('unselected', modo !== 'diario');
-      document.getElementById('modoNivel').classList.toggle('selected', modo === 'nivel');
-      document.getElementById('modoNivel').classList.toggle('unselected', modo !== 'nivel');
-    }
-
-    document.getElementById('startGame').addEventListener('click', async () => {
-      if (!modoSeleccionado) return alert('Seleccioná un modo');
+    document.getElementById('modoNormal').addEventListener('click', () => {
       document.getElementById('introContainer').style.display = 'none';
       juegoContainer.style.display = 'block';
-      if (modoSeleccionado === 'diario') {
-        cargarDesafioDiario();
-        inputsJuego.style.display = 'block';
-      } else if (modoSeleccionado === 'nivel') {
-        selectorContainer.style.display = 'block';
-        await cargarNiveles();
-      }
+      inputsJuego.style.display = 'block';
+      cargarDesafioDiario();
     });
-
-    async function cargarNiveles() {
-      selector.innerHTML = '';
-      niveles = [];
-      const querySnapshot = await getDocs(collection(db, "niveles"));
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        niveles.push(data);
-        const option = document.createElement('option');
-        option.value = niveles.length - 1;
-        option.textContent = data.nombre;
-        selector.appendChild(option);
-      });
-    }
 
     async function cargarDesafioDiario() {
       const hoy = new Date().toISOString().slice(0, 10);
       const q = query(collection(db, "desafios-diarios"), where("fecha", "==", hoy));
       const snapshot = await getDocs(q);
+      console.log("Buscando desafío diario para:", hoy);
+
       if (!snapshot.empty) {
         const data = snapshot.docs[0].data();
         equipo1Div.textContent = data.equipo1;
@@ -145,16 +101,6 @@
         equipo1Div.textContent = "No cargado";
         equipo2Div.textContent = "No cargado";
       }
-    }
-
-    window.cargarNivelSeleccionado = function cargarNivelSeleccionado() {
-      const nivel = niveles[parseInt(selector.value)];
-      if (!nivel) return;
-      equipo1Div.textContent = nivel.equipo1;
-      equipo2Div.textContent = nivel.equipo2;
-      jugadoresValidos = nivel.jugadores.map(j => j.toLowerCase());
-      selectorContainer.style.display = 'none';
-      inputsJuego.style.display = 'block';
     }
 
     window.verificarJugador = function verificarJugador() {

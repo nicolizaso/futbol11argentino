@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perfil - Fútbol 11 Argentino</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Rubik&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #0D1B2A;
+      color: white;
+      font-family: 'Rubik', sans-serif;
+      padding: 40px;
+    }
+    h1, h2 {
+      font-family: 'Anton', sans-serif;
+      color: #A67C00;
+      text-align: center;
+    }
+    .card {
+      background-color: #1e2a38;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px auto;
+      max-width: 600px;
+    }
+    .input-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    input, button {
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      font-size: 16px;
+      width: 100%;
+    }
+    input {
+      background-color: #f8f8f8;
+      color: black;
+    }
+    button {
+      background-color: #A67C00;
+      color: white;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #8d6200;
+    }
+    ul { list-style: none; padding-left: 0; }
+    li { margin: 5px 0; }
+    .logout-btn {
+      background: none;
+      border: none;
+      color: #ccc;
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tu Perfil</h1>
+  <div class="card" id="perfil">
+    <h2>Datos de Usuario</h2>
+    <p><strong>Nombre:</strong> <span id="nombreUsuario"></span></p>
+    <p><strong>Correo:</strong> <span id="emailUsuario"></span></p>
+    <button class="logout-btn" onclick="cerrarSesion()">Cerrar sesión</button>
+  </div>
+
+  <div class="card">
+    <h2>Niveles Completados</h2>
+    <ul id="listaNiveles"></ul>
+  </div>
+
+  <div class="card">
+    <h2>¿Creés que sabés de fútbol? Jugatelá y arriesgá:</h2>
+    <p>Elegí al Campeón, Decepción, Revelación, Goleador y Figura, y participá por importantes premios.</p>
+    <div class="input-row">
+      <label style="width: 40%;">Campeón</label>
+      <input id="pickCampeon" type="text">
+    </div>
+    <div class="input-row">
+      <label style="width: 40%;">Decepción</label>
+      <input id="pickDecepcion" type="text">
+    </div>
+    <div class="input-row">
+      <label style="width: 40%;">Revelación</label>
+      <input id="pickRevelacion" type="text">
+    </div>
+    <div class="input-row">
+      <label style="width: 40%;">Goleador</label>
+      <input id="pickGoleador" type="text">
+    </div>
+    <div class="input-row">
+      <label style="width: 40%;">Figura</label>
+      <input id="pickFigura" type="text">
+    </div>
+    <button id="btnGuardarPredicciones">Guardar</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, query, where
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCmKCofXzl05FtXPF5doBMvCf-rY-0aGFE",
+      authDomain: "futbol-11-argentino-16892.firebaseapp.com",
+      projectId: "futbol-11-argentino-16892",
+      storageBucket: "futbol-11-argentino-16892.appspot.com",
+      messagingSenderId: "266321510777",
+      appId: "1:266321510777:web:2d9a6441cf49e897ceafa8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const usuario = JSON.parse(localStorage.getItem("usuarioActual"));
+
+    if (!usuario) window.location.href = "login.html";
+
+    document.getElementById("nombreUsuario").textContent = usuario.nombre;
+    document.getElementById("emailUsuario").textContent = usuario.email;
+
+    async function cargarNiveles() {
+      const ref = collection(db, `usuarios/${usuario.usuario}/nivelesCompletados`);
+      const snap = await getDocs(ref);
+      const ul = document.getElementById("listaNiveles");
+      snap.forEach(doc => {
+        const data = doc.data();
+        const li = document.createElement("li");
+        li.textContent = `${data.equipo} - ${data.nivel}`;
+        ul.appendChild(li);
+      });
+    }
+
+    function obtenerFechaFormateada() {
+      const fecha = new Date();
+      const pad = (n) => n.toString().padStart(2, '0');
+      return `${fecha.getFullYear()}-${pad(fecha.getMonth()+1)}-${pad(fecha.getDate())}-${pad(fecha.getHours())}-${pad(fecha.getMinutes())}`;
+    }
+
+    async function guardarPredicciones() {
+      const ref = doc(db, `usuarios/${usuario.usuario}/predicciones/general`);
+      await setDoc(ref, {
+        campeon: document.getElementById("pickCampeon").value,
+        decepcion: document.getElementById("pickDecepcion").value,
+        revelacion: document.getElementById("pickRevelacion").value,
+        goleador: document.getElementById("pickGoleador").value,
+        figura: document.getElementById("pickFigura").value,
+        timestamp: obtenerFechaFormateada()
+      });
+      alert("Tus predicciones fueron guardadas correctamente.");
+    }
+
+    document.getElementById("btnGuardarPredicciones").addEventListener("click", guardarPredicciones);
+
+    window.cerrarSesion = () => {
+      localStorage.removeItem("usuarioActual");
+      window.location.href = "login.html";
+    };
+
+    cargarNiveles();
+  </script>
+</body>
+</html>

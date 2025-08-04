@@ -48,16 +48,17 @@
       }
 
       const [yyyy, mm, dd] = fecha.split('-');
-      const juegoId = `Juego${juego.split('-').pop()}-${dd}-${mm}-${yyyy}`;
+      const docId = `Juego${juego.split('-').pop()}-${dd}-${mm}-${yyyy}`;
 
       try {
-        await setDoc(doc(db, 'desafios-diarios', juegoId), {
+        await setDoc(doc(db, `juegos/${juego}/desafios-diarios/${docId}`), {
           juego,
           fecha,
           equipo1,
           equipo2,
           jugadores
         });
+        document.getElementById('mensajeConfirmacion').textContent = '✅ Desafío guardado correctamente';
         document.getElementById('mensajeConfirmacion').style.display = 'block';
         setTimeout(() => window.location.reload(), 1500);
       } catch (error) {
@@ -78,16 +79,18 @@
         return;
       }
 
-      const nivelId = `${equipo1.replace(/\s+/g, '')}${nombre.replace(/\s+/g, '')}`;
+      const equipoKey = equipo1.trim().replace(/\s+/g, '');
+      const nivelKey = nombre.trim().replace(/\s+/g, '');
 
       try {
-        await setDoc(doc(db, 'niveles', nivelId), {
+        await setDoc(doc(db, `juegos/${juego}/niveles/${equipoKey}/Nivel/${nivelKey}`), {
           juego,
           nombre,
           equipo1,
           equipo2,
           jugadores
         });
+        document.getElementById('mensajeConfirmacion').textContent = '✅ Nivel guardado correctamente';
         document.getElementById('mensajeConfirmacion').style.display = 'block';
         setTimeout(() => window.location.reload(), 1500);
       } catch (error) {
@@ -98,9 +101,7 @@
   </script>
 </head>
 <body>
-  <div id="mensajeConfirmacion" class="success-message" style="display: none;">
-    ✅ Desafío guardado correctamente
-  </div>
+  <div id="mensajeConfirmacion" class="success-message" style="display: none;"></div>
 
   <div class="container">
     <h1>Panel de Administración</h1>
