@@ -12,6 +12,7 @@
   <!-- Firebase compat para usar en HTML sin módulos -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 </head>
 <body>
   <header>Fútbol 11 Argentino</header>
@@ -102,6 +103,40 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
+    let currentUser = null;
+    auth.onAuthStateChanged(user => {
+      currentUser = user;
+      if (user) {
+  const username = user.displayName || user.email.split("@")[0];
+  const nivelesRef = db.collection("usuarios").doc(username).collection("nivelesCompletados");
+
+  nivelesRef.get().then(snapshot => {
+    let completados = 0;
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const equipo = data.equipo;
+      const nivel = data.nivel;
+
+      // Buscar el checkbox correspondiente
+      const fila = Array.from(tablaNiveles.querySelectorAll('tbody tr')).find(tr =>
+        tr.cells[0].textContent.replace(/\s+/g, '').includes(equipo)
+      );
+
+      if (fila && fila.cells[nivel]) {
+        const checkbox = fila.cells[parseInt(nivel)].querySelector('input[type="checkbox"]');
+        if (checkbox) {
+          checkbox.checked = true;
+          completados++;
+        }
+      }
+    });
+    completadosSpan.textContent = completados;
+  }).catch(error => {
+    console.error("Error al cargar niveles completados:", error);
+  });
+}
+
+      });
 
 
     const checkboxes = document.querySelectorAll('input[type="checkbox"]');
@@ -114,6 +149,8 @@
 
     let jugadoresTotales = [];
     let jugadoresEncontrados = [];
+    let cantidadObjetivo = 0;
+
 
     checkboxes.forEach(cb => {
       cb.addEventListener('change', () => {
@@ -148,6 +185,8 @@
           const equipo1 = data.equipo1;
           const equipo2 = data.equipo2;
           jugadoresTotales = data.jugadores || [];
+          cantidadObjetivo = data.cantidad || jugadoresTotales.length;
+
 
           juegoContainer.innerHTML = `
             <h3>${equipoOriginal} - Nivel ${nivel}</h3>
@@ -159,6 +198,7 @@
             </div>
             <p id="mensajeJugador" style="color: red;"></p>
             <ul id="jugadoresCorrectos" style="list-style: none; padding: 0; margin-top: 20px;"></ul>
+            <p id="contadorJugadores" style="margin-top: 10px;">Jugadores Encontrados: 0/${cantidadObjetivo}</p>
           `;
         } else {
           juegoContainer.innerHTML = "<p>No se encontró el nivel en la base de datos.</p>";
@@ -170,7 +210,7 @@
     }
 
     async function guardarNivelCompletado(equipo, nivel, jugadores) {
-      const user = auth.currentUser;
+      const user = currentUser;
       if (!user) return;
       const username = user.displayName || user.email.split("@")[0];
       const timestamp = new Date();
@@ -192,8 +232,7 @@
       } catch (error) {
         console.error("Error al guardar nivel completado:", error);
       }
-    }
-
+      }
     function enviarJugador() {
       const input = document.getElementById('jugadorInput');
       const mensaje = document.getElementById('mensajeJugador');
@@ -212,13 +251,14 @@
       }
 
       jugadoresEncontrados.push(jugador);
+      document.getElementById("contadorJugadores").textContent = `Jugadores Encontrados: ${jugadoresEncontrados.length}/${cantidadObjetivo}`;
       mensaje.textContent = '';
       const li = document.createElement('li');
       li.textContent = jugador;
       lista.appendChild(li);
       input.value = '';
 
-      if (jugadoresEncontrados.length >= jugadoresTotales.length) {
+      if (jugadoresEncontrados.length >= cantidadObjetivo) {
         guardarNivelCompletado(equipoIDGlobal, nivelGlobal, jugadoresEncontrados);
 
         const popup = document.createElement('div');

@@ -85,6 +85,9 @@
     import {
       getFirestore, collection, query, where, getDocs, setDoc, doc
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import {
+      getAuth, updateProfile, createUserWithEmailAndPassword, signInWithEmailAndPassword
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCmKCofXzl05FtXPF5doBMvCf-rY-0aGFE",
@@ -97,6 +100,7 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
     const usuariosRef = collection(db, "usuarios");
 
     window.mostrarRegistro = () => {
@@ -128,8 +132,26 @@
         password
       });
 
+      const credenciales = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(credenciales.user, {
+        displayName: usuario
+      });
+
       alert("Registro exitoso. Iniciando sesión...");
-      setTimeout(() => loginUsuario(usuario, password), 1000);
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+
+        const usuarioDoc = await getDocs(query(usuariosRef, where("usuario", "==", usuario)));
+        if (!usuarioDoc.empty) {
+          localStorage.setItem("usuarioActual", JSON.stringify(usuarioDoc.docs[0].data()));
+          window.location.href = "index.html";
+        } else {
+          alert("No se pudo obtener la información del usuario.");
+        }
+      } catch (error) {
+        alert("Error al iniciar sesión: " + error.message);
+      }
     };
 
     window.loginUsuario = async (forzadoUsuario, forzadaPassword) => {
@@ -145,7 +167,6 @@
       window.location.href = "index.html";
     };
 
-    // Redirección automática si ya está logueado
     const yaLogueado = localStorage.getItem("usuarioActual");
     if (yaLogueado) window.location.href = "index.html";
   </script>

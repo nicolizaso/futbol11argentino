@@ -41,6 +41,8 @@
       const equipo1 = document.getElementById('equipo1').value;
       const equipo2 = document.getElementById('equipo2').value;
       const jugadores = document.getElementById('jugadores').value.split(',').map(j => j.trim());
+      const cantidad = parseInt(document.getElementById('cantidadJugadoresDesafio').value);
+
 
       if (!fecha || !juego || !equipo1 || !equipo2 || jugadores.length === 0) {
         alert('Completá todos los campos.');
@@ -56,7 +58,8 @@
           fecha,
           equipo1,
           equipo2,
-          jugadores
+          jugadores,
+          cantidad
         });
         document.getElementById('mensajeConfirmacion').textContent = '✅ Desafío guardado correctamente';
         document.getElementById('mensajeConfirmacion').style.display = 'block';
@@ -73,6 +76,8 @@
       const equipo1 = document.getElementById('nivelEquipo1').value;
       const equipo2 = document.getElementById('nivelEquipo2').value;
       const jugadores = document.getElementById('nivelJugadores').value.split(',').map(j => j.trim());
+      const cantidad = parseInt(document.getElementById('cantidadJugadoresNivel').value);
+
 
       if (!nombre || !juego || !equipo1 || !equipo2 || jugadores.length === 0) {
         alert('Completá todos los campos.');
@@ -88,7 +93,8 @@
           nombre,
           equipo1,
           equipo2,
-          jugadores
+          jugadores,
+          cantidad
         });
         document.getElementById('mensajeConfirmacion').textContent = '✅ Nivel guardado correctamente';
         document.getElementById('mensajeConfirmacion').style.display = 'block';
@@ -124,6 +130,9 @@
 
       <label for="jugadores">Jugadores válidos (separados por coma):</label>
       <textarea id="jugadores"></textarea>
+      
+      <label for="cantidadJugadoresDesafio">Cantidad de Jugadores:</label>
+      <input type="number" id="cantidadJugadoresDesafio" min="1">
 
       <button onclick="guardarDesafio()">Guardar desafío diario</button>
     </div>
@@ -146,6 +155,9 @@
 
       <label for="nivelJugadores">Jugadores válidos (separados por coma):</label>
       <textarea id="nivelJugadores"></textarea>
+      <label for="cantidadJugadoresNivel">Cantidad de Jugadores:</label>
+      <input type="number" id="cantidadJugadoresNivel" min="1">
+
 
       <button onclick="guardarNivel()">Guardar nivel</button>
     </div>
