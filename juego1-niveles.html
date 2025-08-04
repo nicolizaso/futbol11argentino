@@ -101,6 +101,8 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
+
 
     const checkboxes = document.querySelectorAll('input[type="checkbox"]');
     const completadosSpan = document.getElementById('completados');
@@ -128,6 +130,8 @@
       const juegoContainer = document.getElementById('juegoContainer');
 
       const equipoID = equipoOriginal.replace(/\s+/g, '');
+      equipoIDGlobal = equipoID;
+      nivelGlobal = nivel;
 
       tablaNiveles.style.display = 'none';
       selectores.style.display = 'none';
@@ -150,10 +154,9 @@
             <p>${equipo1} vs ${equipo2}</p>
             <p>Nombrá jugadores que hayan pasado por ambos clubes.</p>
             <div class="input-jugador-container">
-            <input type="text" id="jugadorInput" placeholder="Nombre del jugador" />
-            <button onclick="enviarJugador()">→</button>
+              <input type="text" id="jugadorInput" placeholder="Nombre del jugador" />
+              <button onclick="enviarJugador()">→</button>
             </div>
-
             <p id="mensajeJugador" style="color: red;"></p>
             <ul id="jugadoresCorrectos" style="list-style: none; padding: 0; margin-top: 20px;"></ul>
           `;
@@ -165,27 +168,36 @@
         juegoContainer.innerHTML = "<p>Error al cargar el nivel.</p>";
       }
     }
-async function guardarNivelCompletado(equipo, nivel) {
+
+    async function guardarNivelCompletado(equipo, nivel, jugadores) {
       const user = auth.currentUser;
       if (!user) return;
       const username = user.displayName || user.email.split("@")[0];
+      const timestamp = new Date();
+      const fecha = `${timestamp.getFullYear()}-${String(timestamp.getMonth() + 1).padStart(2, '0')}-${String(timestamp.getDate()).padStart(2, '0')}-${String(timestamp.getHours()).padStart(2, '0')}-${String(timestamp.getMinutes()).padStart(2, '0')}`;
 
       try {
-        await db.collection("juegos")
-          .doc("juego1")
-          .collection("nivelesCompletados")
+        await db.collection("usuarios")
           .doc(username)
-          .set({ [`${equipo}_Nivel${nivel}`]: true }, { merge: true });
-        console.log("Nivel guardado como completado en la base de datos");
+          .collection("nivelesCompletados")
+          .doc(`${equipo}_Nivel${nivel}`)
+          .set({
+            juego: "juego1",
+            equipo: equipo,
+            nivel: nivel,
+            fecha: fecha,
+            jugadores: jugadores
+          });
+        console.log("Nivel guardado como completado");
       } catch (error) {
-        console.error("Error al guardar el nivel completado:", error);
+        console.error("Error al guardar nivel completado:", error);
       }
     }
+
     function enviarJugador() {
       const input = document.getElementById('jugadorInput');
       const mensaje = document.getElementById('mensajeJugador');
       const lista = document.getElementById('jugadoresCorrectos');
-
       const jugador = input.value.trim();
       if (!jugador) return;
 
@@ -201,13 +213,14 @@ async function guardarNivelCompletado(equipo, nivel) {
 
       jugadoresEncontrados.push(jugador);
       mensaje.textContent = '';
-
       const li = document.createElement('li');
       li.textContent = jugador;
       lista.appendChild(li);
       input.value = '';
 
       if (jugadoresEncontrados.length >= jugadoresTotales.length) {
+        guardarNivelCompletado(equipoIDGlobal, nivelGlobal, jugadoresEncontrados);
+
         const popup = document.createElement('div');
         popup.style.position = 'fixed';
         popup.style.top = '50%';
