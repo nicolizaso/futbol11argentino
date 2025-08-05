@@ -18,9 +18,19 @@
     }
   </style>
 
+  <style>
+    .success-message {
+      color: #00ff99;
+      font-weight: bold;
+      margin-top: 10px;
+      text-align: center;
+    }
+  </style>
+
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { getFirestore, collection, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import * as XLSX from 'https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs';
 
     const firebaseConfig = {
       apiKey: "AIzaSyCmKCofXzl05FtXPF5doBMvCf-rY-0aGFE",
@@ -42,7 +52,6 @@
       const equipo2 = document.getElementById('equipo2').value;
       const jugadores = document.getElementById('jugadores').value.split(',').map(j => j.trim());
       const cantidad = parseInt(document.getElementById('cantidadJugadoresDesafio').value);
-
 
       if (!fecha || !juego || !equipo1 || !equipo2 || jugadores.length === 0) {
         alert('Completá todos los campos.');
@@ -78,7 +87,6 @@
       const jugadores = document.getElementById('nivelJugadores').value.split(',').map(j => j.trim());
       const cantidad = parseInt(document.getElementById('cantidadJugadoresNivel').value);
 
-
       if (!nombre || !juego || !equipo1 || !equipo2 || jugadores.length === 0) {
         alert('Completá todos los campos.');
         return;
@@ -103,6 +111,93 @@
         console.error('Error al guardar nivel:', error);
         alert('Hubo un error al guardar el nivel.');
       }
+    }
+
+    window.guardarEquipo = async function guardarEquipo() {
+      const nombre = document.getElementById('equipoNombre').value.trim();
+      const ciudad = document.getElementById('equipoCiudad').value.trim();
+      const torneo = document.getElementById('equipoTorneo').value.trim();
+      const imagen = document.getElementById('equipoImagen').value.trim() || nombre;
+
+      if (!nombre || !ciudad || !torneo) {
+        alert('Completá todos los campos.');
+        return;
+      }
+
+      const equipoID = nombre.replace(/\s+/g, '');
+
+      try {
+        await setDoc(doc(db, "equipos", equipoID), {
+          nombre,
+          ciudad,
+          torneo,
+          imagen
+        });
+        document.getElementById('mensajeConfirmacion').textContent = '✅ Equipo guardado correctamente';
+        document.getElementById('mensajeConfirmacion').style.display = 'block';
+        setTimeout(() => window.location.reload(), 1500);
+      } catch (error) {
+        console.error('Error al guardar equipo:', error);
+        alert('Hubo un error al guardar el equipo.');
+      }
+    }
+
+    window.importarEquiposDesdeExcel = async function importarEquiposDesdeExcel(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const equipos = XLSX.utils.sheet_to_json(sheet);
+
+      for (const equipo of equipos) {
+        const nombre = equipo.nombre?.trim();
+        const ciudad = equipo.ciudad?.trim();
+        const torneo = equipo.torneo?.trim();
+        const imagen = equipo.imagen?.trim() || nombre;
+        if (!nombre || !ciudad || !torneo) continue;
+        const equipoID = nombre.replace(/\s+/g, '');
+        await setDoc(doc(db, "equipos", equipoID), { nombre, ciudad, torneo, imagen });
+      }
+
+      alert('✅ Equipos cargados correctamente');
+      setTimeout(() => window.location.reload(), 1500);
+    }
+    window.importarJugadoresDesdeExcel = async function importarJugadoresDesdeExcel(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const jugadores = XLSX.utils.sheet_to_json(sheet);
+
+      for (const jugador of jugadores) {
+        const nombre = jugador.nombre?.trim();
+        const equipo = jugador.equipo?.trim();
+        const liga = jugador.liga?.trim();
+        const puesto = jugador.puesto?.trim();
+        const edad = parseInt(jugador.edad);
+        const nacionalidad = jugador.nacionalidad?.trim();
+
+        if (!nombre || !equipo || !liga || !puesto || isNaN(edad) || !nacionalidad) continue;
+        const jugadorID = nombre.replace(/\s+/g, '_').toLowerCase();
+
+        await setDoc(doc(db, "jugadores", jugadorID), {
+          nombre,
+          equipo,
+          liga,
+          puesto,
+          edad,
+          nacionalidad
+        });
+      }
+
+      alert('✅ Jugadores cargados correctamente');
+      setTimeout(() => window.location.reload(), 1500);
     }
   </script>
 </head>
@@ -158,8 +253,35 @@
       <label for="cantidadJugadoresNivel">Cantidad de Jugadores:</label>
       <input type="number" id="cantidadJugadoresNivel" min="1">
 
-
       <button onclick="guardarNivel()">Guardar nivel</button>
+    </div>
+
+    <div class="section">
+      <h2>Cargar Equipo</h2>
+
+      <label for="equipoNombre">Nombre del equipo:</label>
+      <input type="text" id="equipoNombre" placeholder="Ej: River Plate">
+
+      <label for="equipoCiudad">Ciudad o localidad:</label>
+      <input type="text" id="equipoCiudad" placeholder="Ej: Buenos Aires">
+
+      <label for="equipoTorneo">Torneo:</label>
+      <input type="text" id="equipoTorneo" placeholder="Ej: Liga Profesional">
+
+      <label for="equipoImagen">Nombre de imagen (sin extensión):</label>
+      <input type="text" id="equipoImagen" placeholder="Ej: River Plate">
+
+      <button onclick="guardarEquipo()">Guardar equipo</button>
+
+      <hr>
+      <label for="archivoExcel">Carga masiva desde Excel:</label>
+      <input type="file" id="archivoExcel" accept=".xls,.xlsx" onchange="importarEquiposDesdeExcel(event)">
+    </div>
+    <div class="section">
+      <h2>Cargar Jugadores</h2>
+      <label for="archivoJugadores">Archivo Excel de jugadores:</label>
+      <input type="file" id="archivoJugadores" accept=".xls,.xlsx" onchange="importarJugadoresDesdeExcel(event)">
+      <p>Debe tener las columnas: nombre, equipo, liga, puesto, edad, nacionalidad</p>
     </div>
   </div>
 </body>
