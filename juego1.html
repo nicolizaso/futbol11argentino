@@ -31,38 +31,40 @@
   </div>
 
   <div class="container" id="juegoContainer" style="display: none;">
-    <div class="equipos">
-      <div id="equipo1">⚽</div>
-      <div id="equipo2">⚽</div>
+    <div style="display: flex; justify-content: center; align-items: center; gap: 20px;">
+      <div style="text-align: center;">
+        <img id="escudo1" src="" alt="Equipo 1" style="width: 60px; height: 60px;"><br>
+        <span id="nombreEquipo1"></span>
+      </div>
+      <strong>vs</strong>
+      <div style="text-align: center;">
+        <img id="escudo2" src="" alt="Equipo 2" style="width: 60px; height: 60px;"><br>
+        <span id="nombreEquipo2"></span>
+      </div>
     </div>
 
-    <div id="inputsJuego" style="display: none;">
-      <div class="mensaje" id="mensaje" style="text-align: center;"></div>
-      <input type="text" id="jugadorInput" placeholder="Escribí el nombre del jugador...">
-      <button onclick="verificarJugador()">Enviar</button>
-      <div id="listaJugadores"></div>
-    </div>
-  </div>
+    <p style="margin-top: 20px; text-align: center;">Nombrá jugadores que hayan pasado por ambos clubes.</p>
 
-  <div id="mensajeVictoria" class="popup-victoria" style="display: none;">
-    <div class="popup-contenido">
-      <h2>✨ ¡Felicidades, lo pasaste! ✨</h2>
-      <button onclick="window.location.href='index.html'">Volver al menú</button>
+    <div class="input-jugador-container" style="text-align: center;">
+      <input type="text" id="jugadorInput" placeholder="Nombre del jugador" />
+      <button onclick="verificarJugador()">→</button>
     </div>
+    <p id="mensajeJugador" style="color: red; text-align: center;"></p>
+    <ul id="jugadoresCorrectos" style="list-style: none; padding: 0; margin-top: 20px; text-align: center;"></ul>
+    <p id="contadorJugadores" style="margin-top: 10px; text-align: center;">Jugadores Encontrados: 0/X</p>
   </div>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFirestore, collection, query, where, getDocs, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyCmKCofXzl05FtXPF5doBMvCf-rY-0aGFE",
       authDomain: "futbol-11-argentino-16892.firebaseapp.com",
       projectId: "futbol-11-argentino-16892",
-      storageBucket: "futbol-11-argentino-16892.firebasestorage.app",
+      storageBucket: "futbol-11-argentino-16892.appspot.com",
       messagingSenderId: "266321510777",
-      appId: "1:266321510777:web:2d9a6441cf49e897ceafa8",
-      measurementId: "G-GKTXCJ5K74"
+      appId: "1:266321510777:web:2d9a6441cf49e897ceafa8"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -70,64 +72,91 @@
 
     let jugadoresValidos = [];
     let jugadoresEncontrados = [];
+    let cantidad = 0;
+    let fechaDesafio = "";
 
-    const mensajeDiv = document.getElementById('mensaje');
-    const equipo1Div = document.getElementById('equipo1');
-    const equipo2Div = document.getElementById('equipo2');
-    const juegoContainer = document.getElementById('juegoContainer');
-    const listaJugadores = document.getElementById('listaJugadores');
-    const mensajeVictoria = document.getElementById('mensajeVictoria');
-    const inputsJuego = document.getElementById('inputsJuego');
+    const usuario = JSON.parse(localStorage.getItem("usuarioActual"));
 
-    document.getElementById('modoNormal').addEventListener('click', () => {
-      document.getElementById('introContainer').style.display = 'none';
-      juegoContainer.style.display = 'block';
-      inputsJuego.style.display = 'block';
+    document.getElementById("modoNormal").addEventListener("click", () => {
+      document.getElementById("introContainer").style.display = "none";
+      document.getElementById("juegoContainer").style.display = "block";
       cargarDesafioDiario();
     });
 
     async function cargarDesafioDiario() {
-      const hoy = new Date().toISOString().slice(0, 10);
-      const q = query(collection(db, "desafios-diarios"), where("fecha", "==", hoy));
+      fechaDesafio = new Date().toISOString().slice(0, 10);
+      const q = query(collection(db, "juegos/juego1/desafios-diarios"), where("fecha", "==", fechaDesafio));
       const snapshot = await getDocs(q);
-      console.log("Buscando desafío diario para:", hoy);
-
       if (!snapshot.empty) {
         const data = snapshot.docs[0].data();
-        equipo1Div.textContent = data.equipo1;
-        equipo2Div.textContent = data.equipo2;
-        jugadoresValidos = data.jugadores.map(j => j.toLowerCase());
-      } else {
-        equipo1Div.textContent = "No cargado";
-        equipo2Div.textContent = "No cargado";
+        document.getElementById("nombreEquipo1").textContent = data.equipo1;
+        document.getElementById("nombreEquipo2").textContent = data.equipo2;
+        document.getElementById("escudo1").src = `img/escudos equipos/A/${data.equipo1}.png`;
+        document.getElementById("escudo2").src = `img/escudos equipos/A/${data.equipo2}.png`;
+        jugadoresValidos = data.jugadores || [];
+        cantidad = data.cantidad || jugadoresValidos.length;
+        actualizarContador();
       }
     }
 
-    window.verificarJugador = function verificarJugador() {
-      const input = document.getElementById('jugadorInput');
-      const nombre = input.value.trim().toLowerCase();
-      mensajeDiv.textContent = '';
+    window.verificarJugador = async function () {
+      const input = document.getElementById("jugadorInput");
+      const mensaje = document.getElementById("mensajeJugador");
+      const lista = document.getElementById("jugadoresCorrectos");
+      const jugador = input.value.trim();
+      if (!jugador) return;
 
-      if (!nombre) return;
-      if (jugadoresEncontrados.includes(nombre)) {
-        mensajeDiv.textContent = 'Jugador ya utilizado.';
+      if (!jugadoresValidos.includes(jugador)) {
+        mensaje.textContent = 'El jugador no jugó en ambos clubes.';
         return;
       }
-      if (jugadoresValidos.includes(nombre)) {
-        jugadoresEncontrados.push(nombre);
-        if (listaJugadores.textContent.length > 0) {
-          listaJugadores.textContent += ' ; ';
-        }
-        listaJugadores.textContent += nombre;
-        input.value = '';
 
-        if (jugadoresEncontrados.length === jugadoresValidos.length) {
-          juegoContainer.style.display = 'none';
-          mensajeVictoria.classList.add('popup-activo');
-        }
-      } else {
-        mensajeDiv.textContent = 'Jugador incorrecto.';
+      if (jugadoresEncontrados.includes(jugador)) {
+        mensaje.textContent = 'Ya nombraste a ese jugador.';
+        return;
       }
+
+      jugadoresEncontrados.push(jugador);
+      mensaje.textContent = '';
+      const li = document.createElement("li");
+      li.textContent = jugador;
+      lista.appendChild(li);
+      input.value = '';
+      actualizarContador();
+
+      if (jugadoresEncontrados.length >= cantidad) {
+        await guardarDesafioCompletado();
+
+        const popup = document.createElement('div');
+        popup.style.position = 'fixed';
+        popup.style.top = '50%';
+        popup.style.left = '50%';
+        popup.style.transform = 'translate(-50%, -50%)';
+        popup.style.background = '#fff';
+        popup.style.padding = '20px';
+        popup.style.borderRadius = '10px';
+        popup.innerHTML = `
+          <h3>¡Completaste el desafío diario!</h3>
+          <button onclick="window.location.href='index.html'">Inicio</button>
+        `;
+        document.body.appendChild(popup);
+      }
+    }
+
+    async function guardarDesafioCompletado() {
+      if (!usuario || !usuario.usuario) return;
+      const id = `juego1-${fechaDesafio}`;
+      const docRef = doc(db, `usuarios/${usuario.usuario}/desafiosCompletados`, id);
+      await setDoc(docRef, {
+        juego: "juego1",
+        fecha: fechaDesafio,
+        jugadores: jugadoresEncontrados
+      });
+    }
+
+    function actualizarContador() {
+      const contador = document.getElementById("contadorJugadores");
+      contador.textContent = `Jugadores Encontrados: ${jugadoresEncontrados.length}/${cantidad}`;
     }
   </script>
 </body>
