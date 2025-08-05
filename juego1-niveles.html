@@ -20,7 +20,7 @@
   <div class="container" style="text-align: center;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <a id="botonAtras" href="juego1.html" style="color: #ffffff; text-decoration: underline; margin: 10px;">Atrás</a>
-      <h1 class="titulo-juego">Niveles</h1>
+      <h1 id="tituloNivel" class="titulo-juego">Niveles</h1>
       <div style="width: 60px;"></div>
     </div>
 
@@ -169,7 +169,6 @@
       const equipoID = equipoOriginal.replace(/\s+/g, '');
       equipoIDGlobal = equipoID;
       nivelGlobal = nivel;
-
       tablaNiveles.style.display = 'none';
       selectores.style.display = 'none';
       botonComenzar.style.display = 'none';
@@ -187,19 +186,29 @@
           jugadoresTotales = data.jugadores || [];
           cantidadObjetivo = data.cantidad || jugadoresTotales.length;
 
+document.getElementById("tituloNivel").textContent = `${equipoOriginal} - Nivel ${nivel}`;
 
-          juegoContainer.innerHTML = `
-            <h3>${equipoOriginal} - Nivel ${nivel}</h3>
-            <p>${equipo1} vs ${equipo2}</p>
-            <p>Nombrá jugadores que hayan pasado por ambos clubes.</p>
-            <div class="input-jugador-container">
-              <input type="text" id="jugadorInput" placeholder="Nombre del jugador" />
-              <button onclick="enviarJugador()">→</button>
-            </div>
-            <p id="mensajeJugador" style="color: red;"></p>
-            <ul id="jugadoresCorrectos" style="list-style: none; padding: 0; margin-top: 20px;"></ul>
-            <p id="contadorJugadores" style="margin-top: 10px;">Jugadores Encontrados: 0/${cantidadObjetivo}</p>
-          `;
+juegoContainer.innerHTML = `
+      <div style="display: flex; justify-content: center; align-items: center; gap: 20px;">
+        <div style="text-align: center;">
+          <img src="img/escudos equipos/A/${equipo1}.png" alt="${equipo1}" style="width: 60px; height: 60px;"><br>
+          <span>${equipo1}</span>
+        </div>
+        <strong>vs</strong>
+        <div style="text-align: center;">
+          <img src="img/escudos equipos/A/${equipo2}.png" alt="${equipo2}" style="width: 60px; height: 60px;"><br>
+          <span>${equipo2}</span>
+        </div>
+      </div>
+      <p style="margin-top: 20px;">Nombrá jugadores que hayan pasado por ambos clubes.</p>
+      <div class="input-jugador-container">
+        <input type="text" id="jugadorInput" placeholder="Nombre del jugador" />
+        <button onclick="enviarJugador()">→</button>
+      </div>
+      <p id="mensajeJugador" style="color: red;"></p>
+      <ul id="jugadoresCorrectos" style="list-style: none; padding: 0; margin-top: 20px;"></ul>
+      <p id="contadorJugadores" style="margin-top: 10px;">Jugadores Encontrados: 0/${cantidadObjetivo}</p>
+    `;
         } else {
           juegoContainer.innerHTML = "<p>No se encontró el nivel en la base de datos.</p>";
         }
@@ -270,7 +279,7 @@
         popup.style.padding = '20px';
         popup.style.borderRadius = '10px';
         popup.innerHTML = `
-          <h3>Completaste el nivel "${document.querySelector('h3').textContent}"</h3>
+        <h3>Completaste el nivel "${document.getElementById('tituloNivel').textContent}"</h3>
           <button onclick="window.location.href='juego1-niveles.html'">Niveles</button>
           <button onclick="window.location.href='index.html'">Inicio</button>
         `;
