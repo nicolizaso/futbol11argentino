@@ -10,9 +10,10 @@ export default {
         navy: '#0D1B2A',
         gold: '#A67C00',
         slate: '#1e2a38',
+        lightblue: '#74acdf',
       },
       fontFamily: {
-        sans: ['Rubik', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['Anton', 'sans-serif'],
       },
     },
