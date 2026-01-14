@@ -1,0 +1,14 @@
+{
+  "name": "futbol11argentino-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --workspace=client",
+    "build": "npm run build --workspace=client",
+    "server": "cd server && npm start"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ]
+}
