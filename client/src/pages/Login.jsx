@@ -44,15 +44,25 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-navy">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-slate/80 backdrop-blur-md p-8 rounded-xl shadow-2xl w-full max-w-md border border-white/10"
+        className="bg-surface/50 backdrop-blur-md p-8 rounded-xl shadow-2xl w-full max-w-md border border-white/10"
       >
-        <h1 className="text-3xl text-gold text-center mb-6">Fútbol 11 Argentino</h1>
+        <div className="flex flex-col items-center mb-8">
+            <motion.img
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                src="/logo.png"
+                alt="Logo"
+                className="w-24 h-24 object-contain mb-4 drop-shadow-[0_0_15px_rgba(166,124,0,0.5)]"
+            />
+            <h1 className="text-3xl text-white font-heading font-bold text-center">Fútbol 11 Argentino</h1>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 font-sans">
           {!isLogin && (
             <>
               <input
@@ -61,7 +71,7 @@ export default function Login() {
                 placeholder="Nombre Completo"
                 value={formData.fullName}
                 onChange={handleChange}
-                className="w-full p-3 rounded bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gold"
+                className="w-full p-3 rounded-lg bg-white/5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary border border-white/10"
                 required
               />
               <input
@@ -70,7 +80,7 @@ export default function Login() {
                 placeholder="Nombre de Usuario"
                 value={formData.username}
                 onChange={handleChange}
-                className="w-full p-3 rounded bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gold"
+                className="w-full p-3 rounded-lg bg-white/5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary border border-white/10"
                 required
               />
             </>
@@ -82,7 +92,7 @@ export default function Login() {
             placeholder="Correo electrónico"
             value={formData.email}
             onChange={handleChange}
-            className="w-full p-3 rounded bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gold"
+            className="w-full p-3 rounded-lg bg-white/5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary border border-white/10"
             required
           />
 
@@ -92,15 +102,16 @@ export default function Login() {
             placeholder="Contraseña"
             value={formData.password}
             onChange={handleChange}
-            className="w-full p-3 rounded bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gold"
+            className="w-full p-3 rounded-lg bg-white/5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary border border-white/10"
             required
           />
 
           <motion.button
+            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-gold text-white font-bold rounded hover:bg-yellow-600 transition-colors disabled:opacity-50"
+            className="w-full py-3 bg-gradient-to-r from-accent to-yellow-600 text-white font-bold rounded-lg shadow-lg hover:shadow-accent/20 transition-all disabled:opacity-50 mt-6"
           >
             {loading ? 'Cargando...' : (isLogin ? 'Iniciar Sesión' : 'Registrarse')}
           </motion.button>
@@ -108,7 +119,7 @@ export default function Login() {
 
         <button
           onClick={() => setIsLogin(!isLogin)}
-          className="w-full mt-4 text-sm text-gray-400 underline hover:text-white transition-colors"
+          className="w-full mt-6 text-sm text-gray-400 hover:text-primary transition-colors text-center"
         >
           {isLogin ? '¿No tenés cuenta? Registrate' : '¿Ya tenés cuenta? Iniciá sesión'}
         </button>
