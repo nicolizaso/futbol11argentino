@@ -5,3 +5,4 @@ server/node_modules/
 dist/
 client/dist/
 .DS_Store
+tools/serviceAccountKey.json

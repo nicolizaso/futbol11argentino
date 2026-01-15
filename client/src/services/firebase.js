@@ -21,17 +21,41 @@ if (missingVars.length > 0) {
   );
 }
 
+// Fallback config
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "mock-key",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "mock-domain",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "mock-project",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "mock-bucket",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "mock-sender",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "mock-app-id"
 };
 
-// Prevent crash if config is invalid, but auth/db calls will likely fail
-const app = missingVars.length === 0 ? initializeApp(firebaseConfig) : initializeApp({});
+let app;
+let auth;
+let db;
 
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+try {
+    app = initializeApp(firebaseConfig);
+    // These might fail if config is totally bogus (like "mock-key") and SDK tries to validate immediately?
+    // Usually they don't fail until you use them, but let's be safe.
+    try {
+        auth = getAuth(app);
+    } catch (e) {
+        console.warn("Auth init failed:", e);
+        auth = null;
+    }
+    try {
+        db = getFirestore(app);
+    } catch (e) {
+        console.warn("DB init failed:", e);
+        db = null;
+    }
+} catch (e) {
+    console.warn("Firebase Init Error (Mocking):", e);
+    app = null;
+    auth = null;
+    db = null;
+}
+
+export { auth, db };
