@@ -1,4 +1,3 @@
-
 const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
@@ -50,32 +49,23 @@ async function updatePlayers() {
       const teamId = teamDoc.id;
       console.log(`Found team ${teamName} with ID: ${teamId}`);
 
-      // 2. Delete existing players
-      // Note: Assuming 'jugadores' is the collection name based on typical usage,
-      // but the user prompt mentioned 'players' collection in "Mission Objective".
-      // However, previous checks showed 'jugadores' might be it.
-      // I'll check for both or stick to one. The user said "Update the players collection".
-      // Let's assume the collection name is 'jugadores' based on the Spanish context of 'equipos'.
-      // If the user meant the collection named 'players', they might have been translating.
-      // Wait, the user said "Update the players collection".
-      // Given the file structure uses Spanish (equipos), it is highly likely the collection is 'jugadores'.
-      // But to be safe, I will allow passing the collection name as an argument or default to 'jugadores'.
-      // Actually, looking at `check_db.js` (which I read earlier), it queries `jugadores`.
-      const COLLECTION_NAME = 'jugadores';
+      // 2. Target Subcollection: Jugadores/{teamName}/jugadores
+      // Note: User specified "Jugadores (Collection) -> [teamName] (Document) -> jugadores (Subcollection)"
+      const rootCollection = 'Jugadores';
+      const subCollection = 'jugadores';
 
-      const existingPlayersQuery = await db.collection(COLLECTION_NAME)
-        .where('teamId', '==', teamId)
-        .get();
+      const teamPlayersRef = db.collection(rootCollection).doc(teamName).collection(subCollection);
+      const existingDocs = await teamPlayersRef.get();
 
-      if (!existingPlayersQuery.empty) {
-        console.log(`Deleting ${existingPlayersQuery.size} existing players for ${teamName}...`);
+      if (!existingDocs.empty) {
+        console.log(`Deleting ${existingDocs.size} existing players for ${teamName}...`);
 
         // Batch delete
         const batches = [];
         let batch = db.batch();
         let operationCount = 0;
 
-        existingPlayersQuery.docs.forEach((doc) => {
+        existingDocs.docs.forEach((doc) => {
           batch.delete(doc.ref);
           operationCount++;
 
@@ -104,9 +94,17 @@ async function updatePlayers() {
       let insertCount = 0;
 
       for (const player of players) {
-        const newPlayerRef = db.collection(COLLECTION_NAME).doc();
+        const newPlayerRef = teamPlayersRef.doc();
+        // Map fields according to requirements
+        // name -> nombre
+        // positions -> posicion (array)
+        // teamId -> teamId
+        // teamName -> equipo
+
         insertBatch.set(newPlayerRef, {
-          ...player,
+          nombre: player.name,
+          posicion: player.positions, // Storing array as requested
+          equipo: teamName,
           teamId: teamId
         });
         insertCount++;

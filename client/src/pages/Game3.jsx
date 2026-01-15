@@ -4,7 +4,7 @@ import GameLayout from '../components/GameLayout';
 import { db } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
 import { saveProgress } from '../services/gameService';
-import { collection, query, where, getDocs, limit, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, collectionGroup, query, where, getDocs, limit, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import shieldsData from '../data/shields.json';
 import playersData from '../data/players.json';
 import { Check, X, Search, Trophy, RotateCcw } from 'lucide-react';
@@ -12,31 +12,32 @@ import confetti from 'canvas-confetti';
 
 // --- Constants & Fallbacks ---
 
-// Fallback formation if DB fetch fails
+// Fallback formation if DB fetch fails (Using Spanish codes)
 const FALLBACK_FORMATION = {
   name: "4-3-3 Ofensivo",
   layout: [
-    { id: 1, role: 'GK', top: '88%', left: '50%' },
-    { id: 2, role: 'DF', top: '70%', left: '20%' }, // LB
-    { id: 3, role: 'DF', top: '70%', left: '40%' }, // CB
-    { id: 4, role: 'DF', top: '70%', left: '60%' }, // CB
-    { id: 5, role: 'DF', top: '70%', left: '80%' }, // RB
-    { id: 6, role: 'MF', top: '45%', left: '30%' }, // CM
-    { id: 7, role: 'MF', top: '45%', left: '50%' }, // CDM
-    { id: 8, role: 'MF', top: '45%', left: '70%' }, // CM
-    { id: 9, role: 'FW', top: '20%', left: '20%' }, // LW
-    { id: 10, role: 'FW', top: '15%', left: '50%' }, // ST
-    { id: 11, role: 'FW', top: '20%', left: '80%' }  // RW
+    { id: 1, role: 'PO', top: '88%', left: '50%' },
+    { id: 2, role: 'DFI', top: '70%', left: '20%' },
+    { id: 3, role: 'DFC', top: '70%', left: '40%' },
+    { id: 4, role: 'DFC', top: '70%', left: '60%' },
+    { id: 5, role: 'DFD', top: '70%', left: '80%' },
+    { id: 6, role: 'MC', top: '45%', left: '30%' },
+    { id: 7, role: 'MCD', top: '45%', left: '50%' },
+    { id: 8, role: 'MC', top: '45%', left: '70%' },
+    { id: 9, role: 'EI', top: '20%', left: '20%' },
+    { id: 10, role: 'DC', top: '15%', left: '50%' },
+    { id: 11, role: 'ED', top: '20%', left: '80%' }
   ],
-  counts: { GK: 1, DF: 4, MF: 3, FW: 3 }
+  counts: { PO: 1, DFI: 1, DFC: 2, DFD: 1, MCD: 1, MC: 2, EI: 1, DC: 1, ED: 1 }
 };
 
-// Position Mapping
+// Position Mapping (1:1 for Spanish codes)
 const ROLE_MAP = {
-  'Arquero': 'GK', 'GK': 'GK',
-  'Defensor': 'DF', 'DF': 'DF', 'LB': 'DF', 'RB': 'DF', 'CB': 'DF', 'LWB': 'DF', 'RWB': 'DF',
-  'Mediocampista': 'MF', 'MF': 'MF', 'CDM': 'MF', 'CM': 'MF', 'CAM': 'MF', 'LM': 'MF', 'RM': 'MF',
-  'Delantero': 'FW', 'FW': 'FW', 'ST': 'FW', 'CF': 'FW', 'LW': 'FW', 'RW': 'FW'
+  'PO': 'PO',
+  'DFD': 'DFD', 'DFC': 'DFC', 'DFI': 'DFI',
+  'MCD': 'MCD', 'MC': 'MC', 'MCO': 'MCO',
+  'MD': 'MD', 'MI': 'MI',
+  'DC': 'DC', 'EI': 'EI', 'ED': 'ED'
 };
 
 const getShieldUrl = (teamName) => `/img/escudos equipos/A/${teamName}.png`;
@@ -59,6 +60,13 @@ export default function Game3() {
   const [verifying, setVerifying] = useState(false);
   const [feedback, setFeedback] = useState(null); // { type: 'success'|'error', msg: '' }
 
+  // Position Selector State
+  const [positionSelector, setPositionSelector] = useState({
+    visible: false,
+    player: null, // { nombre, equipo, shieldUrl }
+    validSlots: [] // Array of slot objects
+  });
+
   // Refs
   const inputRef = useRef(null);
   const suggestionRef = useRef(null);
@@ -74,6 +82,7 @@ export default function Game3() {
     setInputVal('');
     setFeedback(null);
     setStartTime(Date.now());
+    setPositionSelector({ visible: false, player: null, validSlots: [] });
 
     try {
       // 1. Fetch Formation
@@ -99,7 +108,7 @@ export default function Game3() {
       // layout is expected to be array of objects with { role, top, left }
       const initialSlots = selectedFormation.layout.map((pos, idx) => ({
         id: idx,
-        role: pos.role || 'MF', // default
+        role: pos.role || 'MC', // default to MC if undefined
         style: { top: pos.top, left: pos.left },
         filled: false,
         player: null
@@ -131,11 +140,6 @@ export default function Game3() {
   };
 
   const pickNextTeam = (teams, currentSlots) => {
-    // Pick a random team
-    // Optional: Could exclude teams already on the pitch if we want '11 clubs distinct' rule
-    // The prompt says "Generate a new random team".
-    // I will try to avoid duplicates if possible, but randomness is key.
-
     // Get used teams
     const usedTeams = new Set(currentSlots.filter(s => s.filled && s.player).map(s => s.player.equipo));
 
@@ -178,27 +182,26 @@ export default function Game3() {
     setFeedback(null);
 
     try {
-      // 1. Verify Player in DB (get Team & Position)
+      // 1. Verify Player in DB (Collection Group Query)
       let playerData = null;
 
       try {
           if (db) {
-            const q = query(collection(db, "jugadores"), where("nombre", "==", name));
+            // Using collectionGroup to find player across all team subcollections
+            const q = query(collectionGroup(db, "jugadores"), where("nombre", "==", name));
             const snapshot = await getDocs(q);
 
             if (!snapshot.empty) {
+                // If duplicates exist (same name different team?), we might need logic.
+                // For now take the first match.
                 playerData = snapshot.docs[0].data();
             }
           }
       } catch (e) {
-          console.warn("Firestore query failed, using mock data if possible or fail", e);
+          console.warn("Firestore query failed", e);
       }
 
       if (!playerData) {
-        // Fallback or Error
-        // If DB is down, we can't verify unless we have local player db.
-        // The instructions imply DB connection.
-        // I'll show error.
         showFeedback('error', 'No se pudo verificar el jugador (Error de conexión o no encontrado).');
         setVerifying(false);
         return;
@@ -212,41 +215,45 @@ export default function Game3() {
       }
 
       // 3. Verify Position & Find Slot
-      const rawPos = playerData.posicion || playerData.position || 'MF'; // fallback
-      const role = ROLE_MAP[rawPos] || 'MF';
+      // playerData.posicion is expected to be an array of strings like ["PO", "DFC"]
+      // Fallback to old structure if array missing
+      const playerPositions = Array.isArray(playerData.posicion)
+        ? playerData.posicion
+        : (playerData.posicion ? [playerData.posicion] : (playerData.position ? [playerData.position] : ['MC']));
 
-      // Find first empty slot matching role
-      const slotIndex = slots.findIndex(s => s.role === role && !s.filled);
+      // Find all matching empty slots
+      // A slot is valid if its role matches ANY of the player's positions
+      const matchingSlots = slots.filter(slot =>
+        !slot.filled && playerPositions.some(posCode => ROLE_MAP[posCode] === slot.role || posCode === slot.role)
+      );
 
-      if (slotIndex === -1) {
-        showFeedback('error', `La posición ${role} (${rawPos}) ya está completa`);
+      if (matchingSlots.length === 0) {
+        const joinedPos = playerPositions.join(', ');
+        showFeedback('error', `La posición ${joinedPos} no está disponible o no coincide con la formación.`);
         setVerifying(false);
         return;
       }
 
-      // 4. Fill Slot
-      const newSlots = [...slots];
-      newSlots[slotIndex] = {
-        ...newSlots[slotIndex],
-        filled: true,
-        player: {
-          nombre: playerData.nombre,
-          equipo: playerData.equipo,
-          shieldUrl: getShieldUrl(playerData.equipo)
-        }
+      // 4. Fill Slot or Show Selector
+      const playerObj = {
+        nombre: playerData.nombre,
+        equipo: playerData.equipo,
+        shieldUrl: getShieldUrl(playerData.equipo)
       };
-      setSlots(newSlots);
 
-      showFeedback('success', `¡Correcto! ${playerData.nombre} agregado.`);
-      setInputVal('');
-
-      // 5. Check Win or Next
-      const filledCount = newSlots.filter(s => s.filled).length;
-      if (filledCount === 11) {
-        handleWin();
+      if (matchingSlots.length === 1) {
+        // Only one option, auto-fill
+        fillSlot(matchingSlots[0].id, playerObj);
       } else {
-        pickNextTeam(teamsList, newSlots);
+        // Multiple options, trigger selector
+        setPositionSelector({
+          visible: true,
+          player: playerObj,
+          validSlots: matchingSlots
+        });
       }
+
+      setInputVal('');
 
     } catch (error) {
       console.error(error);
@@ -256,12 +263,42 @@ export default function Game3() {
     }
   };
 
+  const fillSlot = (slotId, playerObj) => {
+    const newSlots = slots.map(slot => {
+      if (slot.id === slotId) {
+        return {
+          ...slot,
+          filled: true,
+          player: playerObj
+        };
+      }
+      return slot;
+    });
+
+    setSlots(newSlots);
+    showFeedback('success', `¡Correcto! ${playerObj.nombre} agregado.`);
+    setPositionSelector({ visible: false, player: null, validSlots: [] });
+
+    // Check Win or Next
+    const filledCount = newSlots.filter(s => s.filled).length;
+    if (filledCount === 11) {
+      handleWin(newSlots);
+    } else {
+      pickNextTeam(teamsList, newSlots);
+    }
+  };
+
+  const handleSelectorSelection = (slotId) => {
+    if (!positionSelector.player) return;
+    fillSlot(slotId, positionSelector.player);
+  };
+
   const showFeedback = (type, msg) => {
     setFeedback({ type, msg });
     setTimeout(() => setFeedback(null), 3000);
   };
 
-  const handleWin = async () => {
+  const handleWin = async (finalSlots) => {
     setGameState('won');
     confetti({
       particleCount: 150,
@@ -274,15 +311,11 @@ export default function Game3() {
     if (currentUser) {
         try {
             const timeElapsed = Math.floor((Date.now() - startTime) / 1000);
-            const teamOf11 = slots.map(s => ({
+            const teamOf11 = finalSlots.map(s => ({
                 position: s.role,
                 player: s.player.nombre,
                 team: s.player.equipo
             }));
-
-            // Using direct save to a generic collection as gameService.saveProgress is specific to 'daily' or 'levels'
-            // But we can adapt saveProgress if we define a type.
-            // For now, let's write to a dedicated collection for Game 3 history.
 
             await setDoc(doc(collection(db, `usuarios/${currentUser.uid}/partidasJuego3`)), {
                 fecha: new Date().toISOString(),
@@ -373,7 +406,7 @@ export default function Game3() {
                                 </motion.div>
                             ) : (
                                 /* Empty Slot */
-                                <div className="w-full h-full bg-white/10 backdrop-blur-sm rounded-full border-2 border-dashed border-white/30 flex items-center justify-center">
+                                <div className={`w-full h-full bg-white/10 backdrop-blur-sm rounded-full border-2 border-dashed ${positionSelector.validSlots.find(s=>s.id===slot.id) ? 'border-primary bg-primary/20 animate-pulse' : 'border-white/30'} flex items-center justify-center`}>
                                     <span className="text-white/50 text-xs font-bold">{slot.role}</span>
                                 </div>
                             )}
@@ -409,13 +442,13 @@ export default function Game3() {
                             value={inputVal}
                             onChange={handleInputChange}
                             placeholder="Nombre del jugador..."
-                            disabled={verifying}
+                            disabled={verifying || positionSelector.visible}
                             className="w-full bg-navy/50 border border-white/20 text-white rounded-lg py-3 pl-10 pr-4 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-gray-500"
                         />
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
 
                         {/* Suggestions Dropdown */}
-                        {showSuggestions && (
+                        {showSuggestions && !positionSelector.visible && (
                              <div className="absolute bottom-full left-0 right-0 mb-1 bg-surface border border-white/10 rounded-lg shadow-xl max-h-40 overflow-y-auto">
                                 {suggestions.map((s, idx) => (
                                     <button
@@ -429,6 +462,30 @@ export default function Game3() {
                             </div>
                         )}
                     </div>
+
+                    {/* Position Selector Overlay */}
+                    {positionSelector.visible && (
+                        <div className="absolute inset-x-0 bottom-full mb-4 bg-surface border border-white/10 rounded-xl p-4 shadow-2xl z-50 mx-4">
+                             <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-white font-bold text-sm">Selecciona la posición</h3>
+                                <button onClick={() => setPositionSelector({visible:false, player:null, validSlots:[]})} className="text-gray-400 hover:text-white">
+                                    <X size={16} />
+                                </button>
+                             </div>
+                             <p className="text-xs text-gray-400 mb-3">¿En qué posición quieres ubicar a <span className="text-primary">{positionSelector.player?.nombre}</span>?</p>
+                             <div className="grid grid-cols-2 gap-2">
+                                 {positionSelector.validSlots.map(slot => (
+                                     <button
+                                        key={slot.id}
+                                        onClick={() => handleSelectorSelection(slot.id)}
+                                        className="bg-navy/50 hover:bg-primary/20 border border-white/10 hover:border-primary/50 rounded-lg p-2 text-center transition-all"
+                                     >
+                                         <span className="block text-primary font-bold">{slot.role}</span>
+                                     </button>
+                                 ))}
+                             </div>
+                        </div>
+                    )}
 
                     {/* Feedback Toast */}
                     <AnimatePresence>
