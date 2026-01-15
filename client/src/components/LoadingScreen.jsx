@@ -5,15 +5,14 @@ export default function LoadingScreen() {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
       <motion.div
         animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.5, 1, 0.5],
+          scale: [1, 1.1, 1],
         }}
         transition={{
-          duration: 2,
+          duration: 1.5,
           repeat: Infinity,
           ease: "easeInOut",
         }}
-        className="relative"
+        className="bg-white rounded-full p-4 h-32 w-32 shadow-md flex items-center justify-center"
       >
         <img
           src="/logo.png"

@@ -51,7 +51,7 @@ export default function Login() {
         className="bg-surface/50 backdrop-blur-md p-8 rounded-xl shadow-2xl w-full max-w-md border border-white/10"
       >
         <div className="flex flex-col items-center mb-8">
-            <motion.img
+            <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.2 }}
