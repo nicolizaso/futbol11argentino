@@ -1,0 +1,20 @@
+
+> client@1.0.0 dev
+> vite
+
+
+  VITE v5.4.21  ready in 395 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+7:00:09 PM [vite] hmr update /src/pages/Admin.jsx, /src/index.css
+7:00:09 PM [vite] hmr update /src/pages/Game2.jsx, /src/index.css
+7:01:58 PM [vite] hmr update /src/index.css, /src/context/AuthContext.jsx, /src/pages/Profile.jsx, /src/pages/Login.jsx, /src/pages/Admin.jsx, /src/pages/Game3.jsx, /src/pages/Game2.jsx, /src/pages/Game1.jsx
+7:01:59 PM [vite] hmr update /src/pages/Game2.jsx, /src/index.css
+7:03:18 PM [vite] hmr update /src/pages/Game2.jsx, /src/index.css
+7:03:18 PM [vite] hmr update /src/pages/Game2.jsx, /src/index.css
+7:04:01 PM [vite] hmr update /src/pages/Game2.jsx, /src/index.css
+7:04:01 PM [vite] hmr update /src/pages/Game2.jsx, /src/index.css
+7:04:44 PM [vite] hmr update /src/pages/Game2.jsx, /src/index.css
+7:04:44 PM [vite] hmr update /src/pages/Admin.jsx, /src/index.css
+7:04:50 PM [vite] hmr update /src/index.css, /src/context/AuthContext.jsx, /src/pages/Profile.jsx, /src/pages/Login.jsx, /src/pages/Admin.jsx, /src/pages/Game3.jsx, /src/pages/Game2.jsx, /src/pages/Game1.jsx
