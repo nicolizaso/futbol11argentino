@@ -15,23 +15,31 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['logo.png'],
       manifest: {
-        name: 'Fútbol 11 Argentino',
+        name: 'Futbol 11 Argentino',
         short_name: 'F11 Arg',
         description: 'Juegos de trivia futbolera argentina',
-        theme_color: '#0D1B2A',
-        background_color: '#0D1B2A',
+        theme_color: '#0d1b2a',
+        background_color: '#0d1b2a',
+        display: 'standalone',
+        orientation: 'portrait',
         icons: [
           {
-            src: 'img/icon-192x192.png',
+            src: 'logo.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'img/icon-512x512.png',
+            src: 'logo.png',
             sizes: '512x512',
             type: 'image/png'
+          },
+          {
+            src: 'logo.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       }
