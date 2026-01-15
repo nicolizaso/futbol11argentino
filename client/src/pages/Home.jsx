@@ -27,64 +27,6 @@ export default function Home() {
       <Navbar />
 
       <main className="flex-grow">
-        {/* Hero Section */}
-        <section className="relative w-full py-16 md:py-24 overflow-hidden">
-            {/* Background Gradient */}
-            <div className="absolute inset-0 bg-gradient-to-b from-background/50 to-background z-0 pointer-events-none" />
-
-             {/* Decorative Elements */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6 }}
-                >
-                    <span className="inline-block py-1 px-3 rounded-full bg-white/5 border border-white/10 text-primary text-sm font-semibold tracking-wider mb-6">
-                        LA PLATAFORMA DEPORTIVA DEFINITIVA
-                    </span>
-                    <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight text-white font-heading">
-                        Demostrá cuánto sabés <br className="hidden md:block" />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-white">
-                            de Fútbol
-                        </span>
-                    </h1>
-                    <p className="max-w-2xl mx-auto text-lg md:text-xl text-gray-300 mb-10 leading-relaxed font-sans">
-                        Desafía tus conocimientos con nuestros minijuegos interactivos.
-                        Completá desafíos, subí de nivel y competí con amigos.
-                    </p>
-
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <Link
-                            to="/game1"
-                        >
-                             <motion.div
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="w-full sm:w-auto px-8 py-4 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300 flex items-center justify-center gap-2"
-                             >
-                                <Trophy className="w-5 h-5" />
-                                Jugar Último Lanzamiento
-                            </motion.div>
-                        </Link>
-                         <Link
-                            to="/profile"
-                        >
-                            <motion.div
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="w-full sm:w-auto px-8 py-4 bg-transparent text-white font-semibold rounded-xl border border-white/20 hover:bg-white/5 transition-all duration-300"
-                            >
-                                Ver Mi Progreso
-                            </motion.div>
-                        </Link>
-                    </div>
-                </motion.div>
-            </div>
-        </section>
-
         {/* Games Grid */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="flex items-center justify-between mb-8">

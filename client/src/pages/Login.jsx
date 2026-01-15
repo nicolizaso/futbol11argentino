@@ -11,8 +11,7 @@ export default function Login() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    username: '',
-    fullName: ''
+    username: ''
   });
   const navigate = useNavigate();
 
@@ -30,7 +29,6 @@ export default function Login() {
         const { user } = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
         await updateProfile(user, { displayName: formData.username });
         await setDoc(doc(db, "usuarios", formData.username), {
-          nombre: formData.fullName,
           usuario: formData.username,
           email: formData.email,
         });
@@ -68,26 +66,15 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-4 font-sans">
           {!isLogin && (
-            <>
-              <input
-                type="text"
-                name="fullName"
-                placeholder="Nombre Completo"
-                value={formData.fullName}
-                onChange={handleChange}
-                className="w-full p-3 rounded-lg bg-white/5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary border border-white/10"
-                required
-              />
-              <input
-                type="text"
-                name="username"
-                placeholder="Nombre de Usuario"
-                value={formData.username}
-                onChange={handleChange}
-                className="w-full p-3 rounded-lg bg-white/5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary border border-white/10"
-                required
-              />
-            </>
+            <input
+              type="text"
+              name="username"
+              placeholder="Nombre de Usuario"
+              value={formData.username}
+              onChange={handleChange}
+              className="w-full p-3 rounded-lg bg-white/5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary border border-white/10"
+              required
+            />
           )}
 
           <input
