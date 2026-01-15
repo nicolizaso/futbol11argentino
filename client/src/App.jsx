@@ -1,7 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AnimatePresence } from 'framer-motion';
+import LoadingScreen from './components/LoadingScreen';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -14,6 +15,11 @@ import Admin from './pages/Admin';
 
 const AnimatedRoutes = () => {
     const location = useLocation();
+    const { loading } = useAuth();
+
+    if (loading) {
+        return <LoadingScreen />;
+    }
 
     return (
         <AnimatePresence mode="wait">

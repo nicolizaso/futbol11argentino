@@ -22,7 +22,7 @@ export default function Home() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="min-h-screen bg-background text-white flex flex-col font-sans selection:bg-primary selection:text-background"
+        className="min-h-screen bg-background text-white flex flex-col font-sans selection:bg-primary selection:text-white"
     >
       <Navbar />
 
@@ -34,7 +34,7 @@ export default function Home() {
 
              {/* Decorative Elements */}
             <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
                 <motion.div
@@ -42,7 +42,7 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6 }}
                 >
-                    <span className="inline-block py-1 px-3 rounded-full bg-white/5 border border-white/10 text-accent text-sm font-semibold tracking-wider mb-6">
+                    <span className="inline-block py-1 px-3 rounded-full bg-white/5 border border-white/10 text-primary text-sm font-semibold tracking-wider mb-6">
                         LA PLATAFORMA DEPORTIVA DEFINITIVA
                     </span>
                     <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight text-white font-heading">
@@ -63,7 +63,7 @@ export default function Home() {
                              <motion.div
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="w-full sm:w-auto px-8 py-4 bg-accent text-white font-bold rounded-xl shadow-lg shadow-accent/20 transition-all duration-300 flex items-center justify-center gap-2"
+                                className="w-full sm:w-auto px-8 py-4 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all duration-300 flex items-center justify-center gap-2"
                              >
                                 <Trophy className="w-5 h-5" />
                                 Jugar Último Lanzamiento
@@ -75,7 +75,7 @@ export default function Home() {
                             <motion.div
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="w-full sm:w-auto px-8 py-4 bg-white/5 text-white font-semibold rounded-xl border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300"
+                                className="w-full sm:w-auto px-8 py-4 bg-transparent text-white font-semibold rounded-xl border border-white/20 hover:bg-white/5 transition-all duration-300"
                             >
                                 Ver Mi Progreso
                             </motion.div>
@@ -89,7 +89,7 @@ export default function Home() {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="flex items-center justify-between mb-8">
                 <h2 className="text-2xl md:text-3xl font-bold font-heading">
-                    Nuestros <span className="text-accent">Juegos</span>
+                    Nuestros <span className="text-primary">Juegos</span>
                 </h2>
                 <span className="text-sm text-gray-400 font-sans">
                     {games.length} Disponibles

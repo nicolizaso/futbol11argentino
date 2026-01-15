@@ -10,5 +10,8 @@
   "workspaces": [
     "client",
     "server"
-  ]
+  ],
+  "devDependencies": {
+    "playwright": "^1.57.0"
+  }
 }
