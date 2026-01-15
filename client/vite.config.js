@@ -19,7 +19,7 @@ export default defineConfig({
       manifest: {
         name: 'Futbol 11 Argentino',
         short_name: 'F11 Arg',
-        description: 'Juegos de trivia futbolera argentina',
+        description: 'La plataforma deportiva definitiva de fútbol argentino',
         theme_color: '#0d1b2a',
         background_color: '#0d1b2a',
         display: 'standalone',
@@ -40,6 +40,23 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
+          }
+        ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg}'],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/api'),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 72 * 60 * 60 // 72 hours
+              },
+              networkTimeoutSeconds: 10
+            }
           }
         ]
       }

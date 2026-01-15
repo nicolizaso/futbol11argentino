@@ -28,19 +28,19 @@ export default function Profile() {
                 animate={{ opacity: 1, y: 0 }}
                 className="max-w-md mx-auto"
             >
-                <h1 className="text-3xl font-heading text-accent mb-6 font-bold">Mi Perfil</h1>
+                <h1 className="text-3xl font-heading text-primary mb-6 font-bold">Mi Perfil</h1>
 
-                <div className="bg-surface/50 backdrop-blur-md border border-white/10 rounded-xl p-6 shadow-lg mb-6">
+                <div className="bg-white rounded-xl p-6 shadow-lg mb-6 border border-white/10 text-navy">
                 <div className="flex items-center space-x-4 mb-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-accent to-yellow-600 rounded-full flex items-center justify-center text-2xl font-bold shadow-lg">
+                    <div className="w-16 h-16 bg-gradient-to-br from-primary to-blue-600 rounded-full flex items-center justify-center text-2xl font-bold shadow-lg text-white">
                     {currentUser?.displayName?.[0]?.toUpperCase() || 'U'}
                     </div>
                     <div>
-                    <h2 className="text-xl font-bold text-white">{currentUser?.displayName}</h2>
-                    <p className="text-gray-400 text-sm">{currentUser?.email}</p>
+                    <h2 className="text-xl font-bold text-navy">{currentUser?.displayName}</h2>
+                    <p className="text-gray-500 text-sm">{currentUser?.email}</p>
                     </div>
                 </div>
-                <div className="mt-6 border-t border-white/10 pt-4">
+                <div className="mt-6 border-t border-gray-200 pt-4">
                      <p className="text-primary hover:underline cursor-pointer transition-colors text-sm">
                         Editar Información
                      </p>

@@ -1,7 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AnimatePresence } from 'framer-motion';
+import LoadingScreen from './components/LoadingScreen';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -11,9 +12,16 @@ import Game2 from './pages/Game2';
 import Game3 from './pages/Game3';
 import Game4 from './pages/Game4';
 import Admin from './pages/Admin';
+import WIPScreen from './components/WIPScreen';
+import { useState, useEffect } from 'react';
 
 const AnimatedRoutes = () => {
     const location = useLocation();
+    const { loading } = useAuth();
+
+    if (loading) {
+        return <LoadingScreen />;
+    }
 
     return (
         <AnimatePresence mode="wait">
@@ -39,6 +47,21 @@ const AnimatedRoutes = () => {
 };
 
 function App() {
+  const [accessGranted, setAccessGranted] = useState(() => {
+    return localStorage.getItem('wip_access_granted') === 'true';
+  });
+
+  const wipMode = import.meta.env.VITE_WIP_MODE === 'true';
+
+  const handleAccessGranted = () => {
+    localStorage.setItem('wip_access_granted', 'true');
+    setAccessGranted(true);
+  };
+
+  if (wipMode && !accessGranted) {
+    return <WIPScreen onAccessGranted={handleAccessGranted} />;
+  }
+
   return (
     <AuthProvider>
       <Router>

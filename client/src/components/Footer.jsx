@@ -5,11 +5,13 @@ export default function Footer() {
         <p className="text-gray-400 text-sm font-sans">
           © {new Date().getFullYear()} Fútbol 11 Argentino.
         </p>
-        <img
-            src="/logo.png"
-            alt="Logo"
-            className="h-8 w-auto grayscale opacity-30 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
-        />
+        <div className="bg-white rounded-full p-1.5 h-10 w-10 shadow-md flex items-center justify-center hover:scale-110 transition-transform duration-300">
+            <img
+                src="/logo.png"
+                alt="Logo"
+                className="w-full h-full object-contain"
+            />
+        </div>
       </div>
     </footer>
   );
