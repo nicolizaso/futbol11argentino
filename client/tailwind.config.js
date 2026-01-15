@@ -8,7 +8,7 @@ export default {
     extend: {
       colors: {
         background: '#0d1b2a', // Deep Navy / Midnight Blue (Keeping 'background' for compatibility, same as background-dark)
-        'background-dark': '#0d1b2a',
+        'background-dark': '#0d1b2a', 
         primary: '#74acdf',    // Sky Blue / Celeste
         secondary: '#ffffff',  // Pure White
         'accent-soft': '#e0f2fe', // Very light blue

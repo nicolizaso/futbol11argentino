@@ -55,10 +55,14 @@ export default function Login() {
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                src="/logo.png"
-                alt="Logo"
-                className="w-24 h-24 object-contain mb-4 drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]"
-            />
+                className="bg-white rounded-full p-4 h-32 w-32 shadow-md flex items-center justify-center mb-4"
+            >
+                <img
+                    src="/logo.png"
+                    alt="Logo"
+                    className="w-full h-full object-contain"
+                />
+            </motion.div>
             <h1 className="text-3xl text-white font-heading font-bold text-center">Fútbol 11 Argentino</h1>
         </div>
 

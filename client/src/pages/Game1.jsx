@@ -227,8 +227,8 @@ export default function Game1() {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className={`mt-2 text-sm text-center p-2 rounded ${
-                        message.includes('jugador no jugó') || message.includes('Ya nombraste')
-                        ? 'text-white bg-red-500/80 border border-red-500'
+                        message.includes('jugador no jugó') || message.includes('Ya nombraste') 
+                        ? 'text-white bg-red-500/80 border border-red-500' 
                         : 'text-white bg-primary/20 border border-primary'
                     }`}
                 >
