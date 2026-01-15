@@ -1,0 +1,11 @@
+
+> client@1.0.0 dev
+> vite
+
+
+  VITE v5.4.21  ready in 985 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+5:17:03 PM [vite] .env changed, restarting server...
+5:17:03 PM [vite] server restarted.

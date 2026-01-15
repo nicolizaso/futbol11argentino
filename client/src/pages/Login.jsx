@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc, getFirestore } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
 import { motion } from 'framer-motion';
 
@@ -51,14 +51,18 @@ export default function Login() {
         className="bg-surface/50 backdrop-blur-md p-8 rounded-xl shadow-2xl w-full max-w-md border border-white/10"
       >
         <div className="flex flex-col items-center mb-8">
-            <motion.img
+            <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                src="/logo.png"
-                alt="Logo"
-                className="w-24 h-24 object-contain mb-4 drop-shadow-[0_0_15px_rgba(166,124,0,0.5)]"
-            />
+                className="bg-white rounded-full p-4 h-32 w-32 shadow-md flex items-center justify-center mb-4"
+            >
+                <img
+                    src="/logo.png"
+                    alt="Logo"
+                    className="w-full h-full object-contain"
+                />
+            </motion.div>
             <h1 className="text-3xl text-white font-heading font-bold text-center">Fútbol 11 Argentino</h1>
         </div>
 
@@ -107,11 +111,11 @@ export default function Login() {
           />
 
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-gradient-to-r from-accent to-yellow-600 text-white font-bold rounded-lg shadow-lg hover:shadow-accent/20 transition-all disabled:opacity-50 mt-6"
+            className="w-full py-3 bg-primary text-white font-bold rounded-lg shadow-lg hover:bg-primary/90 transition-all disabled:opacity-50 mt-6"
           >
             {loading ? 'Cargando...' : (isLogin ? 'Iniciar Sesión' : 'Registrarse')}
           </motion.button>
