@@ -13,6 +13,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "canvas-confetti": "^1.9.4",
+    "dotenv": "^17.2.3",
     "firebase": "^10.12.2",
     "framer-motion": "^10.16.4",
     "lucide-react": "^0.395.0",

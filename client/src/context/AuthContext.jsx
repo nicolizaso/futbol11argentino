@@ -14,12 +14,26 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setLoading(false);
-    });
+    // Safety check: if auth is not initialized properly (mock env), we just bypass loading
+    if (!auth || !auth.app || !auth.app.options || Object.keys(auth.app.options).length === 0) {
+        console.warn("Auth not configured, skipping auth check.");
+        setLoading(false);
+        return;
+    }
 
-    return unsubscribe;
+    try {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            setCurrentUser(user);
+            setLoading(false);
+        }, (error) => {
+            console.error("Auth Error:", error);
+            setLoading(false);
+        });
+        return unsubscribe;
+    } catch (e) {
+        console.error("Auth Init Error:", e);
+        setLoading(false);
+    }
   }, []);
 
   const value = {
