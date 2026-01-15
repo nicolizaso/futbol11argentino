@@ -62,18 +62,28 @@ export default function Game3() {
 
   return (
     <GameLayout title="11 Argentino">
-      <div className="flex flex-col items-center">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex flex-col items-center"
+      >
         <div className="mb-6 text-center">
-          <h2 className="text-xl text-gold mb-2">Armá tu 11 Ideal</h2>
+          <h2 className="text-xl text-accent font-bold mb-2 font-heading">Armá tu 11 Ideal</h2>
           <p className="text-sm text-gray-400">11 jugadores de 11 clubes distintos.</p>
         </div>
 
-        <div className="relative w-full max-w-md aspect-[2/3] bg-green-800 rounded-lg border-2 border-white/20 p-4 mb-6 shadow-inner"
-             style={{ backgroundImage: 'linear-gradient(to bottom, #1a472a 0%, #2d5a3f 100%)' }}>
+        <div className="relative w-full max-w-md aspect-[2/3] bg-gradient-to-b from-green-900 to-green-800 rounded-lg border-4 border-white/10 p-4 mb-6 shadow-2xl overflow-hidden">
+
+          {/* Field Pattern */}
+          <div className="absolute inset-0 opacity-10"
+               style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 19px, #000 20px)' }}>
+          </div>
 
           {/* Field Lines */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-white/20 top-1/2 -translate-y-1/2"></div>
+          <div className="absolute top-0 left-0 right-0 h-0.5 bg-white/20 top-1/2 -translate-y-1/2"></div>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 border-2 border-white/20 rounded-full"></div>
+          <div className="absolute top-0 left-1/4 right-1/4 h-16 border-2 border-t-0 border-white/20"></div>
+          <div className="absolute bottom-0 left-1/4 right-1/4 h-16 border-2 border-b-0 border-white/20"></div>
 
           <div className="grid grid-cols-4 gap-2 h-full relative z-10">
              {/* GK */}
@@ -112,19 +122,21 @@ export default function Game3() {
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
               placeholder={`Jugador para ${POSITIONS[currentPosIndex]}...`}
-              className="flex-grow p-3 rounded bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gold"
+              className="flex-grow p-3 rounded-lg bg-surface/50 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent"
             />
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handlePlayerSubmit}
               disabled={loading}
-              className="px-6 bg-gold rounded font-bold hover:bg-yellow-600 disabled:opacity-50"
+              className="px-6 bg-accent rounded-lg font-bold text-white shadow-lg hover:shadow-accent/20 disabled:opacity-50"
             >
               {loading ? '...' : '+'}
-            </button>
+            </motion.button>
           </div>
-          {message && <p className="text-red-400 text-sm text-center">{message}</p>}
+          {message && <p className="text-red-400 text-sm text-center bg-red-500/10 p-2 rounded">{message}</p>}
         </div>
-      </div>
+      </motion.div>
     </GameLayout>
   );
 }
@@ -135,19 +147,19 @@ function PlayerSlot({ player, position, active, onClick }) {
       whileTap={{ scale: 0.9 }}
       onClick={onClick}
       className={`
-        w-full aspect-square rounded-full flex flex-col items-center justify-center text-xs font-bold border-2
-        ${active ? 'border-gold bg-gold/20' : 'border-white/20 bg-black/20'}
-        ${player ? 'bg-navy border-navy' : ''}
-        transition-colors
+        w-full aspect-square rounded-full flex flex-col items-center justify-center text-xs font-bold border-2 shadow-lg backdrop-blur-sm
+        ${active ? 'border-accent bg-accent/30 shadow-[0_0_10px_rgba(166,124,0,0.5)]' : 'border-white/20 bg-black/40'}
+        ${player ? 'bg-surface border-primary' : ''}
+        transition-all duration-300
       `}
     >
       {player ? (
         <>
-          <span className="text-[10px] leading-tight truncate w-full px-1">{player.nombre}</span>
-          <span className="text-[8px] text-gray-400 truncate w-full px-1">{player.equipo}</span>
+          <span className="text-[10px] leading-tight truncate w-full px-1 text-white">{player.nombre}</span>
+          <span className="text-[8px] text-gray-300 truncate w-full px-1">{player.equipo}</span>
         </>
       ) : (
-        <span className="opacity-50">{position}</span>
+        <span className="opacity-50 text-white">{position}</span>
       )}
     </motion.button>
   );

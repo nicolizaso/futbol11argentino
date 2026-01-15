@@ -1,0 +1,9 @@
+
+> client@1.0.0 dev
+> vite --host --port 3001
+
+
+  VITE v5.4.21  ready in 287 ms
+
+  ➜  Local:   http://localhost:3001/
+  ➜  Network: http://192.168.0.2:3001/
