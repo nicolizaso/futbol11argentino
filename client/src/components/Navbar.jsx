@@ -11,10 +11,8 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
             {/* Logo/Name */}
-            <Link to="/" className="flex items-center space-x-3 group">
-                <div className="bg-white rounded-full p-1.5 h-12 w-12 shadow-md flex items-center justify-center">
-                    <img src="/logo.png" alt="Futbol 11" className="w-full h-full object-contain" />
-                </div>
+            <Link to="/" className="flex items-center space-x-2 group">
+                <img src="/logo.png" alt="Futbol 11" className="max-h-[40px] w-auto object-contain" />
                 <span className="text-xl md:text-2xl font-bold text-white tracking-tight font-heading group-hover:text-primary transition-colors hidden sm:block">
                     Fútbol <span className="text-primary group-hover:text-white transition-colors">11</span>
                 </span>

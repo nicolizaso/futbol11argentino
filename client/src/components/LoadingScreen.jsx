@@ -17,7 +17,7 @@ export default function LoadingScreen() {
         <img
           src="/logo.png"
           alt="Loading..."
-          className="w-full h-full object-contain"
+          className="w-24 h-24 object-contain drop-shadow-[0_0_15px_rgba(116,172,223,0.5)]"
         />
       </motion.div>
     </div>
