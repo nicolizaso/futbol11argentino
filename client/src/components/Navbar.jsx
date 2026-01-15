@@ -7,12 +7,12 @@ export default function Navbar() {
   const { currentUser } = useAuth();
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-background/70 backdrop-blur-md border-b border-white/5 shadow-lg">
+    <nav className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-white/5 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
             {/* Logo/Name */}
             <Link to="/" className="flex items-center space-x-2 group">
-                <img src="/logo.png" alt="Futbol 11" className="max-h-10 w-auto object-contain" />
+                <img src="/logo.png" alt="Futbol 11" className="max-h-[40px] w-auto object-contain" />
                 <span className="text-xl md:text-2xl font-bold text-white tracking-tight font-heading group-hover:text-primary transition-colors hidden sm:block">
                     Fútbol <span className="text-primary group-hover:text-white transition-colors">11</span>
                 </span>
@@ -34,7 +34,7 @@ export default function Navbar() {
                         {currentUser ? (
                             <User className="w-5 h-5 text-primary group-hover:text-white transition-colors" />
                         ) : (
-                            <LogIn className="w-5 h-5 text-accent group-hover:text-white transition-colors" />
+                            <LogIn className="w-5 h-5 text-primary group-hover:text-white transition-colors" />
                         )}
                     </motion.div>
                 </Link>

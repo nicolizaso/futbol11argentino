@@ -8,7 +8,7 @@ export default function Footer() {
         <img
             src="/logo.png"
             alt="Logo"
-            className="h-8 w-auto grayscale opacity-30 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
+            className="h-8 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
         />
       </div>
     </footer>

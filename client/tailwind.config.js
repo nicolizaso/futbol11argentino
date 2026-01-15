@@ -7,21 +7,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#0d1b2a', // Dark Navy
-        primary: '#74acdf',    // Sky Blue
-        accent: '#a67c00',     // Metallic Gold
-        surface: '#1b263b',    // Secondary Dark
-        // Retaining old colors as aliases to prevent immediate breakage,
-        // but they should be replaced in the codebase eventually.
+        background: '#0d1b2a', // Deep Navy / Midnight Blue (Keeping 'background' for compatibility, same as background-dark)
+        'background-dark': '#0d1b2a',
+        primary: '#74acdf',    // Sky Blue / Celeste
+        secondary: '#ffffff',  // Pure White
+        'accent-soft': '#e0f2fe', // Very light blue
+        surface: '#1b263b',    // Secondary Dark (Keeping for now as it matches the navy theme)
+        // Aliases for compatibility if needed, but Gold is removed
         navy: '#0d1b2a',
-        gold: '#a67c00',
-        slate: '#1b263b',
         lightblue: '#74acdf',
       },
       fontFamily: {
-        sans: ['Poppins', 'sans-serif'],
-        heading: ['Montserrat', 'sans-serif'],
-        // Old font families
+        sans: ['Open Sans', 'sans-serif'], // Body text
+        heading: ['Montserrat', 'sans-serif'], // Headings
         display: ['Montserrat', 'sans-serif'],
       },
     },
