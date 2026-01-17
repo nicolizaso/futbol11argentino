@@ -64,6 +64,19 @@ const TeamLogo = ({ teamName, className, style }) => {
   );
 };
 
+// Helper: Slugify (Matches seeder.js)
+const slugify = (text) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Quita acentos
+    .replace(/\s+/g, '-')           // Cambia espacios por guiones
+    .replace(/[^\w-]+/g, '')       // Quita caracteres especiales
+    .replace(/--+/g, '-')           // Evita guiones dobles
+    .trim();
+};
+
 export default function Game3() {
   const { currentUser } = useAuth();
   // Game State
@@ -208,6 +221,13 @@ export default function Game3() {
     submitPlayer(name);
   };
 
+  const handleFormSubmit = (e) => {
+      e.preventDefault();
+      if (inputVal && !verifying) {
+          submitPlayer(inputVal);
+      }
+  };
+
   const submitPlayer = async (name) => {
     setVerifying(true);
     setFeedback(null);
@@ -218,10 +238,17 @@ export default function Game3() {
 
       try {
           if (db && activeTeam) {
-            // Updated Query: Target specific subcollection to avoid Index Error and match structure
+            // Normalize input to slug for robust matching (Case insensitive, accent insensitive)
+            const searchSlug = slugify(name);
+
+            // Query using SLUG in the correct subcollection
             // Path: Jugadores/{teamName}/jugadores
-            const teamName = activeTeam.name.trim();
-            const q = query(collection(db, "Jugadores", teamName, "jugadores"), where("nombre", "==", name));
+            const teamName = activeTeam.name.trim(); // Ensure team name is clean
+
+            const q = query(
+                collection(db, "Jugadores", teamName, "jugadores"),
+                where("slug", "==", searchSlug)
+            );
             const snapshot = await getDocs(q);
 
             if (!snapshot.empty) {
@@ -238,23 +265,16 @@ export default function Game3() {
         return;
       }
 
-      // 2. Verify Team (Double check, though query handles it implicitly by path)
-      // Note: playerData.equipo might not match activeTeam.name if data is inconsistent, but we queried inside the team subcollection.
-      // We'll trust the query path mostly, but good to check.
+      // 2. Verify Team
       if (playerData.equipo && playerData.equipo !== activeTeam.name) {
-         // This case shouldn't happen with the new query unless data is wrong
          console.warn("Player found in correct subcollection but 'equipo' field mismatch", playerData);
       }
 
       // 3. Verify Position & Find Slot
-      // playerData.posicion is expected to be an array of strings like ["PO", "DFC"]
-      // Fallback to old structure if array missing
       const playerPositions = Array.isArray(playerData.posicion)
         ? playerData.posicion
         : (playerData.posicion ? [playerData.posicion] : (playerData.position ? [playerData.position] : ['MC']));
 
-      // Find all matching empty slots
-      // A slot is valid if its role matches ANY of the player's positions
       const matchingSlots = slots.filter(slot =>
         !slot.filled && playerPositions.some(posCode => ROLE_MAP[posCode] === slot.role || posCode === slot.role)
       );
@@ -387,25 +407,29 @@ export default function Game3() {
             </div>
 
             {/* Pitch Container */}
-            <div className="relative w-full aspect-[3/4] bg-[#0d1b2a] rounded-xl border-4 border-white/10 shadow-2xl overflow-hidden mb-6">
+            <div className="relative w-full aspect-[3/4] rounded-xl border-4 border-white/10 shadow-2xl overflow-hidden mb-6 bg-green-900"
+                 style={{
+                     background: 'repeating-linear-gradient(0deg, #2d5a27, #2d5a27 10%, #35652f 10%, #35652f 20%)'
+                 }}
+            >
 
-                {/* Pitch Markings (Sky Blue Lines) */}
+                {/* Pitch Markings (White Lines with contrast) */}
                 <div className="absolute inset-0 opacity-60 pointer-events-none">
                     {/* Center Circle */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25%] aspect-square rounded-full border-2 border-primary"></div>
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25%] aspect-square rounded-full border-2 border-white/70"></div>
                     {/* Halfway Line */}
-                    <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-primary -translate-y-1/2"></div>
+                    <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-white/70 -translate-y-1/2"></div>
                     {/* Penalty Areas */}
-                    <div className="absolute top-0 left-[20%] right-[20%] h-[15%] border-2 border-t-0 border-primary"></div>
-                    <div className="absolute bottom-0 left-[20%] right-[20%] h-[15%] border-2 border-b-0 border-primary"></div>
+                    <div className="absolute top-0 left-[20%] right-[20%] h-[15%] border-2 border-t-0 border-white/70"></div>
+                    <div className="absolute bottom-0 left-[20%] right-[20%] h-[15%] border-2 border-b-0 border-white/70"></div>
                     {/* Goal Areas */}
-                    <div className="absolute top-0 left-[35%] right-[35%] h-[6%] border-2 border-t-0 border-primary"></div>
-                    <div className="absolute bottom-0 left-[35%] right-[35%] h-[6%] border-2 border-b-0 border-primary"></div>
+                    <div className="absolute top-0 left-[35%] right-[35%] h-[6%] border-2 border-t-0 border-white/70"></div>
+                    <div className="absolute bottom-0 left-[35%] right-[35%] h-[6%] border-2 border-b-0 border-white/70"></div>
                     {/* Corner Arcs */}
-                    <div className="absolute top-0 left-0 w-[5%] aspect-square border-r-2 border-b-2 border-primary rounded-br-full"></div>
-                    <div className="absolute top-0 right-0 w-[5%] aspect-square border-l-2 border-b-2 border-primary rounded-bl-full"></div>
-                    <div className="absolute bottom-0 left-0 w-[5%] aspect-square border-r-2 border-t-2 border-primary rounded-tr-full"></div>
-                    <div className="absolute bottom-0 right-0 w-[5%] aspect-square border-l-2 border-t-2 border-primary rounded-tl-full"></div>
+                    <div className="absolute top-0 left-0 w-[5%] aspect-square border-r-2 border-b-2 border-white/70 rounded-br-full"></div>
+                    <div className="absolute top-0 right-0 w-[5%] aspect-square border-l-2 border-b-2 border-white/70 rounded-bl-full"></div>
+                    <div className="absolute bottom-0 left-0 w-[5%] aspect-square border-r-2 border-t-2 border-white/70 rounded-tr-full"></div>
+                    <div className="absolute bottom-0 right-0 w-[5%] aspect-square border-l-2 border-t-2 border-white/70 rounded-tl-full"></div>
                 </div>
 
                 {/* Players */}
@@ -442,7 +466,7 @@ export default function Game3() {
                             ) : (
                                 /* Empty Slot */
                                 <div className={`w-full h-full bg-white/10 backdrop-blur-sm rounded-full border-2 border-dashed ${positionSelector.validSlots.find(s=>s.id===slot.id) ? 'border-primary bg-primary/20 animate-pulse' : 'border-white/30'} flex items-center justify-center`}>
-                                    <span className="text-white/50 text-xs font-bold">{slot.role}</span>
+                                    <span className="text-white text-xs font-bold drop-shadow-md">{slot.role}</span>
                                 </div>
                             )}
                         </motion.div>
@@ -469,8 +493,8 @@ export default function Game3() {
                         </div>
                     </div>
 
-                    {/* Input */}
-                    <div className="relative z-50">
+                    {/* Input Form */}
+                    <form onSubmit={handleFormSubmit} className="relative z-50">
                         <input
                             ref={inputRef}
                             type="text"
@@ -478,15 +502,25 @@ export default function Game3() {
                             onChange={handleInputChange}
                             placeholder="Nombre del jugador..."
                             disabled={verifying || positionSelector.visible}
-                            className="w-full bg-navy/50 border border-white/20 text-white rounded-lg py-3 pl-10 pr-4 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-gray-500"
+                            className="w-full bg-navy/50 border border-white/20 text-white rounded-lg py-3 pl-10 pr-12 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-gray-500"
                         />
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+
+                        {/* Submit Button (Mobile UX) */}
+                        <button
+                            type="submit"
+                            disabled={verifying || !inputVal}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-navy rounded-md p-1.5 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-dark transition-colors"
+                        >
+                            <Check size={18} />
+                        </button>
 
                         {/* Suggestions Dropdown */}
                         {showSuggestions && !positionSelector.visible && (
                              <div className="absolute bottom-full left-0 right-0 mb-1 bg-surface border border-white/10 rounded-lg shadow-xl max-h-40 overflow-y-auto">
                                 {suggestions.map((s, idx) => (
                                     <button
+                                        type="button"
                                         key={idx}
                                         onClick={() => handleSuggestionClick(s)}
                                         className="w-full text-left px-4 py-2 hover:bg-white/5 text-sm text-gray-200 border-b border-white/5 last:border-0"
@@ -496,7 +530,7 @@ export default function Game3() {
                                 ))}
                             </div>
                         )}
-                    </div>
+                    </form>
 
                     {/* Position Selector Overlay */}
                     {positionSelector.visible && (
