@@ -24,9 +24,41 @@ const slugify = (text) => {
 
 const playersData = require('./players_data.json');
 
+// Formación Default para Game 3
+const DEFAULT_FORMATION = {
+  name: "4-3-3 Ofensivo",
+  layout: [
+    { id: 1, role: 'PO', top: '88%', left: '50%' },
+    { id: 2, role: 'DFI', top: '70%', left: '20%' },
+    { id: 3, role: 'DFC', top: '70%', left: '40%' },
+    { id: 4, role: 'DFC', top: '70%', left: '60%' },
+    { id: 5, role: 'DFD', top: '70%', left: '80%' },
+    { id: 6, role: 'MC', top: '45%', left: '30%' },
+    { id: 7, role: 'MCD', top: '45%', left: '50%' },
+    { id: 8, role: 'MC', top: '45%', left: '70%' },
+    { id: 9, role: 'EI', top: '20%', left: '20%' },
+    { id: 10, role: 'DC', top: '15%', left: '50%' },
+    { id: 11, role: 'ED', top: '20%', left: '80%' }
+  ],
+  counts: { PO: 1, DFI: 1, DFC: 2, DFD: 1, MCD: 1, MC: 2, EI: 1, DC: 1, ED: 1 }
+};
+
 async function seedDatabase() {
   console.log('--- 🚀 Iniciando Carga Masiva 2.0 ---');
 
+  // --- SEED CONFIGURACIÓN GLOBAL (Game 3) ---
+  try {
+    console.log('\n⚙️ Configurando Game 3 (Formaciones)...');
+    await db.collection('configuracion').doc('global').set({
+      formaciones: [DEFAULT_FORMATION],
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    console.log('   ✅ Configuración global actualizada con formaciones.');
+  } catch (error) {
+    console.error('   ❌ Error en configuración global:', error);
+  }
+
+  // --- SEED JUGADORES ---
   for (const teamData of playersData) {
     const { teamName, players } = teamData;
     // Usamos el nombre del equipo como ID del documento según tu preferencia
