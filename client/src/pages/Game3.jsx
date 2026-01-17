@@ -3,11 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import GameLayout from '../components/GameLayout';
 import { db } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
-import { saveProgress } from '../services/gameService';
-import { collection, collectionGroup, query, where, getDocs, limit, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import shieldsData from '../data/shields.json';
 import playersData from '../data/players.json';
-import { Check, X, Search, Trophy, RotateCcw } from 'lucide-react';
+import { Check, X, Search, Trophy, RotateCcw, Shield } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 // --- Constants & Fallbacks ---
@@ -40,7 +39,30 @@ const ROLE_MAP = {
   'DC': 'DC', 'EI': 'EI', 'ED': 'ED'
 };
 
-const getShieldUrl = (teamName) => `/img/escudos equipos/A/${teamName}.png`;
+const getShieldUrl = (teamName) => `/img/escudos equipos/A/${teamName ? teamName.trim() : ''}.png`;
+
+const TeamLogo = ({ teamName, className, style }) => {
+  const [error, setError] = useState(false);
+  const src = getShieldUrl(teamName);
+
+  if (error || !teamName) {
+    return (
+      <div className={`${className} flex items-center justify-center bg-white/10 text-white/50`} style={style}>
+        <Shield size={24} />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={teamName}
+      className={className}
+      style={style}
+      onError={() => setError(true)}
+    />
+  );
+};
 
 export default function Game3() {
   const { currentUser } = useAuth();
@@ -85,21 +107,30 @@ export default function Game3() {
     setPositionSelector({ visible: false, player: null, validSlots: [] });
 
     try {
-      // 1. Fetch Formation
+      // 1. Fetch Formation (Modified: from configuration/global)
       let selectedFormation = FALLBACK_FORMATION;
       try {
         if (db) {
-            const formSnapshot = await getDocs(query(collection(db, "formaciones")));
-            if (!formSnapshot.empty) {
-            const forms = formSnapshot.docs.map(d => d.data());
-            // Pick random
-            selectedFormation = forms[Math.floor(Math.random() * forms.length)];
-            // Ensure it has layout
-            if (!selectedFormation.layout) selectedFormation = FALLBACK_FORMATION;
+            const configRef = doc(db, "configuracion", "global");
+            const configSnap = await getDoc(configRef);
+
+            if (configSnap.exists()) {
+                const data = configSnap.data();
+                if (data.formaciones && Array.isArray(data.formaciones) && data.formaciones.length > 0) {
+                    const forms = data.formaciones;
+                    // Pick random
+                    selectedFormation = forms[Math.floor(Math.random() * forms.length)];
+                    // Ensure it has layout
+                    if (!selectedFormation.layout) selectedFormation = FALLBACK_FORMATION;
+                } else {
+                    console.warn("No 'formaciones' array found in configuration/global");
+                }
+            } else {
+                 console.warn("Document 'configuracion/global' does not exist");
             }
         }
       } catch (e) {
-        console.warn("Using fallback formation", e);
+        console.warn("Using fallback formation due to error:", e);
       }
 
       setFormation(selectedFormation);
@@ -182,18 +213,18 @@ export default function Game3() {
     setFeedback(null);
 
     try {
-      // 1. Verify Player in DB (Collection Group Query)
+      // 1. Verify Player in DB
       let playerData = null;
 
       try {
-          if (db) {
-            // Using collectionGroup to find player across all team subcollections
-            const q = query(collectionGroup(db, "jugadores"), where("nombre", "==", name));
+          if (db && activeTeam) {
+            // Updated Query: Target specific subcollection to avoid Index Error and match structure
+            // Path: Jugadores/{teamName}/jugadores
+            const teamName = activeTeam.name.trim();
+            const q = query(collection(db, "Jugadores", teamName, "jugadores"), where("nombre", "==", name));
             const snapshot = await getDocs(q);
 
             if (!snapshot.empty) {
-                // If duplicates exist (same name different team?), we might need logic.
-                // For now take the first match.
                 playerData = snapshot.docs[0].data();
             }
           }
@@ -207,11 +238,12 @@ export default function Game3() {
         return;
       }
 
-      // 2. Verify Team
-      if (playerData.equipo !== activeTeam.name) {
-        showFeedback('error', `Incorrecto. ${playerData.nombre} juega en ${playerData.equipo}`);
-        setVerifying(false);
-        return;
+      // 2. Verify Team (Double check, though query handles it implicitly by path)
+      // Note: playerData.equipo might not match activeTeam.name if data is inconsistent, but we queried inside the team subcollection.
+      // We'll trust the query path mostly, but good to check.
+      if (playerData.equipo && playerData.equipo !== activeTeam.name) {
+         // This case shouldn't happen with the new query unless data is wrong
+         console.warn("Player found in correct subcollection but 'equipo' field mismatch", playerData);
       }
 
       // 3. Verify Position & Find Slot
@@ -337,7 +369,7 @@ export default function Game3() {
       <div className="flex flex-col h-full max-w-lg mx-auto w-full relative">
 
         {/* Game Area */}
-        <div className="flex-grow flex flex-col relative">
+        <div className="flex-grow flex flex-col relative justify-center">
 
             {/* Header / Info */}
             <div className="flex justify-between items-center mb-4 px-2">
@@ -358,22 +390,22 @@ export default function Game3() {
             <div className="relative w-full aspect-[3/4] bg-[#0d1b2a] rounded-xl border-4 border-white/10 shadow-2xl overflow-hidden mb-6">
 
                 {/* Pitch Markings (Sky Blue Lines) */}
-                <div className="absolute inset-0 opacity-30 pointer-events-none">
+                <div className="absolute inset-0 opacity-60 pointer-events-none">
                     {/* Center Circle */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25%] aspect-square rounded-full border-2 border-[#74acdf]"></div>
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25%] aspect-square rounded-full border-2 border-primary"></div>
                     {/* Halfway Line */}
-                    <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-[#74acdf] -translate-y-1/2"></div>
+                    <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-primary -translate-y-1/2"></div>
                     {/* Penalty Areas */}
-                    <div className="absolute top-0 left-[20%] right-[20%] h-[15%] border-2 border-t-0 border-[#74acdf]"></div>
-                    <div className="absolute bottom-0 left-[20%] right-[20%] h-[15%] border-2 border-b-0 border-[#74acdf]"></div>
+                    <div className="absolute top-0 left-[20%] right-[20%] h-[15%] border-2 border-t-0 border-primary"></div>
+                    <div className="absolute bottom-0 left-[20%] right-[20%] h-[15%] border-2 border-b-0 border-primary"></div>
                     {/* Goal Areas */}
-                    <div className="absolute top-0 left-[35%] right-[35%] h-[6%] border-2 border-t-0 border-[#74acdf]"></div>
-                    <div className="absolute bottom-0 left-[35%] right-[35%] h-[6%] border-2 border-b-0 border-[#74acdf]"></div>
+                    <div className="absolute top-0 left-[35%] right-[35%] h-[6%] border-2 border-t-0 border-primary"></div>
+                    <div className="absolute bottom-0 left-[35%] right-[35%] h-[6%] border-2 border-b-0 border-primary"></div>
                     {/* Corner Arcs */}
-                    <div className="absolute top-0 left-0 w-[5%] aspect-square border-r-2 border-b-2 border-[#74acdf] rounded-br-full"></div>
-                    <div className="absolute top-0 right-0 w-[5%] aspect-square border-l-2 border-b-2 border-[#74acdf] rounded-bl-full"></div>
-                    <div className="absolute bottom-0 left-0 w-[5%] aspect-square border-r-2 border-t-2 border-[#74acdf] rounded-tr-full"></div>
-                    <div className="absolute bottom-0 right-0 w-[5%] aspect-square border-l-2 border-t-2 border-[#74acdf] rounded-tl-full"></div>
+                    <div className="absolute top-0 left-0 w-[5%] aspect-square border-r-2 border-b-2 border-primary rounded-br-full"></div>
+                    <div className="absolute top-0 right-0 w-[5%] aspect-square border-l-2 border-b-2 border-primary rounded-bl-full"></div>
+                    <div className="absolute bottom-0 left-0 w-[5%] aspect-square border-r-2 border-t-2 border-primary rounded-tr-full"></div>
+                    <div className="absolute bottom-0 right-0 w-[5%] aspect-square border-l-2 border-t-2 border-primary rounded-tl-full"></div>
                 </div>
 
                 {/* Players */}
@@ -382,8 +414,8 @@ export default function Game3() {
                         <motion.div
                             key={slot.id}
                             initial={{ scale: 0, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center w-[18%] max-w-[70px] aspect-square"
+                            animate={{ scale: 1, opacity: 1, x: "-50%", y: "-50%" }}
+                            className="absolute flex flex-col items-center justify-center w-[18%] max-w-[70px] aspect-square"
                             style={{ top: slot.style.top, left: slot.style.left }}
                         >
                             {slot.filled ? (
@@ -394,7 +426,10 @@ export default function Game3() {
                                 >
                                     {/* Filled Slot: Player Name + Shield */}
                                     <div className="w-full h-full bg-white rounded-full border-2 border-primary shadow-lg flex flex-col items-center justify-center overflow-hidden relative">
-                                        <img src={slot.player.shieldUrl} alt={slot.player.equipo} className="absolute inset-0 w-full h-full object-cover opacity-20" />
+                                        <TeamLogo
+                                            teamName={slot.player.equipo}
+                                            className="absolute inset-0 w-full h-full object-cover opacity-20"
+                                        />
                                         <div className="z-10 flex flex-col items-center justify-center w-full px-1">
                                             <span className="text-[10px] md:text-xs font-bold text-navy text-center leading-none line-clamp-2">{slot.player.nombre}</span>
                                         </div>
@@ -425,8 +460,8 @@ export default function Game3() {
                 >
                     {/* Active Team Prompt */}
                     <div className="flex items-center gap-3 mb-3">
-                        <div className="bg-white rounded-full p-1.5 shadow-md w-12 h-12 flex-shrink-0">
-                            <img src={activeTeam.shieldUrl} alt={activeTeam.name} className="w-full h-full object-contain" />
+                        <div className="bg-white rounded-full p-1.5 shadow-md w-12 h-12 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                            <TeamLogo teamName={activeTeam.name} className="w-full h-full object-contain" />
                         </div>
                         <div className="flex-grow">
                             <p className="text-xs text-primary font-bold uppercase tracking-wider">Próximo Jugador de:</p>
