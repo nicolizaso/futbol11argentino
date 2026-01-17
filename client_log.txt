@@ -1,0 +1,10 @@
+
+> client@1.0.0 dev
+> vite
+
+
+  VITE v5.4.21  ready in 381 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+2:14:00 PM [vite] hmr update /src/pages/Game3.jsx, /src/index.css
