@@ -2,133 +2,85 @@ const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
 
-// Load service account key
-const serviceAccountPath = path.join(__dirname, 'serviceAccountKey.json');
-if (!fs.existsSync(serviceAccountPath)) {
-  console.error('Error: serviceAccountKey.json not found in tools/ directory.');
-  process.exit(1);
-}
-
-const serviceAccount = require(serviceAccountPath);
-
-// Initialize Firebase Admin
+// Inicialización con tu llave privada
+const serviceAccount = require('./serviceAccountKey.json');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
-
 const db = admin.firestore();
 
-// Load player data
-const dataPath = path.join(__dirname, 'players_data.json');
-if (!fs.existsSync(dataPath)) {
-  console.error('Error: players_data.json not found in tools/ directory.');
-  process.exit(1);
-}
-const playersData = require(dataPath);
+// Función auxiliar para crear IDs amigables (Slugs)
+const slugify = (text) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Quita acentos
+    .replace(/\s+/g, '-')           // Cambia espacios por guiones
+    .replace(/[^\w-]+/g, '')       // Quita caracteres especiales
+    .replace(/--+/g, '-')           // Evita guiones dobles
+    .trim();
+};
 
-async function updatePlayers() {
-  console.log('Starting player update process...');
+const playersData = require('./players_data.json');
+
+async function seedDatabase() {
+  console.log('--- 🚀 Iniciando Carga Masiva 2.0 ---');
 
   for (const teamData of playersData) {
     const { teamName, players } = teamData;
-    console.log(`Processing team: ${teamName}`);
+    // Usamos el nombre del equipo como ID del documento según tu preferencia
+    const teamId = teamName; 
+
+    console.log(`\n📦 Equipo: ${teamName}`);
 
     try {
-      // 1. Find team ID
-      const equiposSnapshot = await db.collection('equipos')
-        .where('nombre', '==', teamName)
-        .limit(1)
-        .get();
+      // 1. CREAR EL EQUIPO SI NO EXISTE (o actualizar si ya está)
+      // Usamos .set con { merge: true } para que no borre campos extra si ya existía
+      await db.collection('equipos').doc(teamId).set({
+        nombre: teamName,
+        division: "A", 
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      
+      console.log(`   ✅ Documento de equipo listo (ID: ${teamId})`);
 
-      if (equiposSnapshot.empty) {
-        console.warn(`Team not found: ${teamName}. Skipping...`);
-        continue;
+      // 2. REFERENCIA A LA SUBCOLECCIÓN (Arquitectura 2.0)
+      const playersSubCol = db.collection('Jugadores').doc(teamId).collection('jugadores');
+
+      // 3. LIMPIEZA PREVIA
+      // Borramos los jugadores viejos de este equipo para evitar duplicados
+      const existingPlayers = await playersSubCol.get();
+      if (!existingPlayers.empty) {
+        const deleteBatch = db.batch();
+        existingPlayers.docs.forEach(doc => deleteBatch.delete(doc.ref));
+        await deleteBatch.commit();
+        console.log(`   🧹 Subcolección de jugadores limpia.`);
       }
 
-      const teamDoc = equiposSnapshot.docs[0];
-      const teamId = teamDoc.id;
-      console.log(`Found team ${teamName} with ID: ${teamId}`);
-
-      // 2. Target Subcollection: Jugadores/{teamName}/jugadores
-      // Note: User specified "Jugadores (Collection) -> [teamName] (Document) -> jugadores (Subcollection)"
-      const rootCollection = 'Jugadores';
-      const subCollection = 'jugadores';
-
-      const teamPlayersRef = db.collection(rootCollection).doc(teamName).collection(subCollection);
-      const existingDocs = await teamPlayersRef.get();
-
-      if (!existingDocs.empty) {
-        console.log(`Deleting ${existingDocs.size} existing players for ${teamName}...`);
-
-        // Batch delete
-        const batches = [];
-        let batch = db.batch();
-        let operationCount = 0;
-
-        existingDocs.docs.forEach((doc) => {
-          batch.delete(doc.ref);
-          operationCount++;
-
-          if (operationCount === 499) {
-            batches.push(batch.commit());
-            batch = db.batch();
-            operationCount = 0;
-          }
-        });
-
-        if (operationCount > 0) {
-          batches.push(batch.commit());
-        }
-
-        await Promise.all(batches);
-        console.log(`Deleted existing players.`);
-      } else {
-        console.log(`No existing players found for ${teamName}.`);
-      }
-
-      // 3. Insert new players
-      console.log(`Inserting ${players.length} new players for ${teamName}...`);
-
-      const insertBatches = [];
-      let insertBatch = db.batch();
-      let insertCount = 0;
-
-      for (const player of players) {
-        const newPlayerRef = teamPlayersRef.doc();
-        // Map fields according to requirements
-        // name -> nombre
-        // positions -> posicion (array)
-        // teamId -> teamId
-        // teamName -> equipo
-
-        insertBatch.set(newPlayerRef, {
+      // 4. CARGA DE JUGADORES CON SLUGS
+      const insertBatch = db.batch();
+      players.forEach(player => {
+        const playerSlug = slugify(player.name);
+        const playerRef = playersSubCol.doc(playerSlug);
+        
+        insertBatch.set(playerRef, {
           nombre: player.name,
-          posicion: player.positions, // Storing array as requested
-          equipo: teamName,
-          teamId: teamId
+          posiciones: player.positions,
+          teamId: teamId, // Referencia al equipo
+          slug: playerSlug
         });
-        insertCount++;
+      });
 
-        if (insertCount === 499) {
-          insertBatches.push(insertBatch.commit());
-          insertBatch = db.batch();
-          insertCount = 0;
-        }
-      }
-
-      if (insertCount > 0) {
-        insertBatches.push(insertBatch.commit());
-      }
-
-      await Promise.all(insertBatches);
-      console.log(`Successfully inserted new players for ${teamName}.`);
+      await insertBatch.commit();
+      console.log(`   🚀 ${players.length} jugadores cargados con IDs legibles.`);
 
     } catch (error) {
-      console.error(`Error processing team ${teamName}:`, error);
+      console.error(`   ❌ Error procesando ${teamName}:`, error);
     }
   }
 
-  console.log('Player update process completed.');
+  console.log('\n--- ✨ Proceso completado exitosamente ---');
 }
 
-updatePlayers().catch(console.error);
+seedDatabase().catch(console.error);
