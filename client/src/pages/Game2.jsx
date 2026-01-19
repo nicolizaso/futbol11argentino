@@ -4,7 +4,6 @@ import GameLayout from '../components/GameLayout';
 import { getDailyChallenge, verifyPlayerAnswer, saveProgress } from '../services/gameService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, SkipForward, Flag } from 'lucide-react';
-import playersData from '../data/players.json';
 
 const Countdown = ({ onComplete }) => {
   const [count, setCount] = useState(3);
@@ -98,15 +97,7 @@ export default function Game2() {
   const handleInputChange = (e) => {
     const val = e.target.value;
     setInputVal(val);
-
-    if (val.length > 1) {
-      const matches = playersData.filter(p =>
-        p.toLowerCase().includes(val.toLowerCase())
-      ).slice(0, 5);
-      setSuggestions(matches);
-    } else {
-      setSuggestions([]);
-    }
+    setSuggestions([]); // Disabled autocomplete as players.json is removed
   };
 
   const handleSuggestionClick = (player) => {
