@@ -3,9 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import GameLayout from '../components/GameLayout';
 import { db } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
-import { collection, query, where, getDocs, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import shieldsData from '../data/shields.json';
-import playersData from '../data/players.json';
 import { Check, X, Search, Trophy, RotateCcw, Shield } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -64,16 +63,14 @@ const TeamLogo = ({ teamName, className, style }) => {
   );
 };
 
-// Helper: Slugify (Matches seeder.js)
-const slugify = (text) => {
+// Helper: Normalize Text (Lowercase + No Accents)
+const normalizeText = (text) => {
+  if (!text) return '';
   return text
     .toString()
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Quita acentos
-    .replace(/\s+/g, '-')           // Cambia espacios por guiones
-    .replace(/[^\w-]+/g, '')       // Quita caracteres especiales
-    .replace(/--+/g, '-')           // Evita guiones dobles
+    .replace(/[\u0300-\u036f]/g, '')
     .trim();
 };
 
@@ -86,6 +83,7 @@ export default function Game3() {
   const [slots, setSlots] = useState([]); // Array of 11 slot objects
   const [teamsList, setTeamsList] = useState([]);
   const [activeTeam, setActiveTeam] = useState(null); // { name, shieldUrl }
+  const [squad, setSquad] = useState([]); // Array of players from Firestore
   const [gameState, setGameState] = useState('playing'); // 'playing', 'won'
 
   // Input State
@@ -110,6 +108,25 @@ export default function Game3() {
   useEffect(() => {
     initGame();
   }, []);
+
+  // Fetch Squad when Active Team Changes
+  useEffect(() => {
+    const fetchSquad = async () => {
+      setSquad([]); // Clear previous squad
+      if (!activeTeam || !db) return;
+
+      try {
+        const q = collection(db, "Jugadores", activeTeam.name, "jugadores");
+        const snapshot = await getDocs(q);
+        const players = snapshot.docs.map(doc => doc.data());
+        setSquad(players);
+      } catch (e) {
+        console.error("Error fetching squad:", e);
+      }
+    };
+
+    fetchSquad();
+  }, [activeTeam]);
 
   const initGame = async () => {
     setLoading(true);
@@ -206,10 +223,19 @@ export default function Game3() {
   const handleInputChange = (e) => {
     const val = e.target.value;
     setInputVal(val);
-    if (val.length > 2) {
-      const filtered = playersData
-        .filter(p => p.toLowerCase().includes(val.toLowerCase()))
-        .slice(0, 5);
+
+    if (val.length > 2 && squad.length > 0) {
+      const normalizedInput = normalizeText(val);
+
+      const filtered = squad.filter(player => {
+          const normalizedName = normalizeText(player.nombre);
+          // Rule: Input must match the start of ANY word in the full name
+          const words = normalizedName.split(' ');
+          return words.some(word => word.startsWith(normalizedInput));
+      })
+      .slice(0, 5)
+      .map(p => p.nombre);
+
       setSuggestions(filtered);
       setShowSuggestions(true);
     } else {
@@ -236,49 +262,33 @@ export default function Game3() {
     setFeedback(null);
 
     try {
-      // 1. Verify Player in DB
-      let playerData = null;
+      // 1. Verify Player in Squad (Local Check)
+      const normalizedInput = normalizeText(name);
 
-      try {
-          if (db && activeTeam) {
-            // Normalize input to slug for robust matching (Case insensitive, accent insensitive)
-            const searchSlug = slugify(name);
+      const foundPlayer = squad.find(p => {
+          const normalizedName = normalizeText(p.nombre);
+          // Check exact match of full name OR exact match of any single word
+          const words = normalizedName.split(' ');
+          return normalizedName === normalizedInput || words.some(w => w === normalizedInput);
+      });
 
-            // Query using SLUG in the correct subcollection
-            // Path: Jugadores/{teamName}/jugadores
-            const teamName = activeTeam.name.trim(); // Ensure team name is clean
-
-            const q = query(
-                collection(db, "Jugadores", teamName, "jugadores"),
-                where("slug", "==", searchSlug)
-            );
-            const snapshot = await getDocs(q);
-
-            if (!snapshot.empty) {
-                playerData = snapshot.docs[0].data();
-            }
-          }
-      } catch (e) {
-          console.warn("Firestore query failed", e);
-      }
-
-      if (!playerData) {
-        showFeedback('error', 'No se pudo verificar el jugador (Error de conexión o no encontrado).');
+      if (!foundPlayer) {
+        showFeedback('error', 'Jugador no encontrado en este equipo.');
         setVerifying(false);
         return;
       }
 
       // 2. Verify Team
       // Mapeo flexible: equipo (legacy) o teamId (nuevo seeder)
-      const playerTeam = playerData.equipo || playerData.teamId;
+      const playerTeam = foundPlayer.equipo || foundPlayer.teamId;
       if (playerTeam && playerTeam !== activeTeam.name) {
-         console.warn("Player found in correct subcollection but 'teamId/equipo' field mismatch", playerData);
+         console.warn("Player found in correct subcollection but 'teamId/equipo' field mismatch", foundPlayer);
          // Opcional: Podríamos rechazarlo aquí, pero si está en la subcolección correcta, confiamos en la ruta.
       }
 
       // 3. Verify Position & Find Slot
       // Handle both 'posiciones' (new seeder, array) and 'posicion'/'position' (legacy/fallback)
-      const rawPositions = playerData.posiciones || playerData.posicion || playerData.position;
+      const rawPositions = foundPlayer.posiciones || foundPlayer.posicion || foundPlayer.position;
       const playerPositions = Array.isArray(rawPositions)
         ? rawPositions
         : (rawPositions ? [rawPositions] : ['MC']);
@@ -296,7 +306,7 @@ export default function Game3() {
 
       // 4. Fill Slot or Show Selector
       const playerObj = {
-        nombre: playerData.nombre,
+        nombre: foundPlayer.nombre,
         equipo: playerTeam, // Use the resolved team ID
         shieldUrl: getShieldUrl(playerTeam)
       };
