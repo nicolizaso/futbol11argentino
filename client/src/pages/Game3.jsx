@@ -40,6 +40,13 @@ const ROLE_MAP = {
 
 const getShieldUrl = (teamName) => `/img/escudos equipos/A/${teamName ? teamName.trim() : ''}.png`;
 
+// Helper: Timeout wrapper for promises
+const withTimeout = (promise, ms = 2000) => new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("Timeout")), ms);
+    promise.then(res => { clearTimeout(timer); resolve(res); })
+           .catch(err => { clearTimeout(timer); reject(err); });
+});
+
 const TeamLogo = ({ teamName, className, style }) => {
   const [error, setError] = useState(false);
   const src = getShieldUrl(teamName);
@@ -117,7 +124,7 @@ export default function Game3() {
 
       try {
         const q = collection(db, "Jugadores", activeTeam.name, "jugadores");
-        const snapshot = await getDocs(q);
+        const snapshot = await withTimeout(getDocs(q), 3000);
         const players = snapshot.docs.map(doc => doc.data());
         setSquad(players);
       } catch (e) {
@@ -142,7 +149,8 @@ export default function Game3() {
       try {
         if (db) {
             const configRef = doc(db, "configuracion", "global");
-            const configSnap = await getDoc(configRef);
+            // Wrap in timeout to prevent hanging if DB is unreachable
+            const configSnap = await withTimeout(getDoc(configRef), 3000);
 
             if (configSnap.exists()) {
                 const data = configSnap.data();
@@ -180,7 +188,8 @@ export default function Game3() {
       let teams = Array.isArray(shieldsData) ? shieldsData : []; // Start with fallback (Robust)
       try {
         if (db) {
-            const teamsSnapshot = await getDocs(collection(db, "equipos"));
+            // Wrap in timeout
+            const teamsSnapshot = await withTimeout(getDocs(collection(db, "equipos")), 3000);
             if (!teamsSnapshot.empty) {
                 teams = teamsSnapshot.docs.map(d => d.data().nombre);
             }
@@ -224,7 +233,8 @@ export default function Game3() {
     const val = e.target.value;
     setInputVal(val);
 
-    if (val.length > 2 && squad.length > 0) {
+    // Predictive Search: Show suggestions starting from the first letter
+    if (val.length > 0 && squad.length > 0) {
       const normalizedInput = normalizeText(val);
 
       const filtered = squad.filter(player => {
