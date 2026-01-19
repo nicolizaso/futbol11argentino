@@ -87,3 +87,20 @@ export const verifyPlayerAnswer = (userInput, validAnswers) => {
 
     return validAnswers.some(answer => normalize(answer) === normalizedInput);
 };
+
+// Agregá o actualizá esta función en tu gameService.js
+export const getPlayersByTeam = async (teamName) => {
+  try {
+    // Nueva ruta jerárquica 2.0
+    const playersRef = collection(db, "Jugadores", teamName, "jugadores");
+    const snapshot = await getDocs(playersRef);
+    
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error("Error fetching players for team:", teamName, error);
+    return [];
+  }
+};
