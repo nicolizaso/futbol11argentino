@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import GameLayout from '../components/GameLayout';
 import { db } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
-import { collection, getDocs, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, setDoc, serverTimestamp, collectionGroup } from 'firebase/firestore';
 import shieldsData from '../data/shields.json';
 import { Check, X, Search, Trophy, RotateCcw, Shield } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -90,7 +90,8 @@ export default function Game3() {
   const [slots, setSlots] = useState([]); // Array of 11 slot objects
   const [teamsList, setTeamsList] = useState([]);
   const [activeTeam, setActiveTeam] = useState(null); // { name, shieldUrl }
-  const [squad, setSquad] = useState([]); // Array of players from Firestore
+  const [squad, setSquad] = useState([]); // Array of players from Firestore (Active Team)
+  const [allPlayers, setAllPlayers] = useState([]); // All players for predictive search
   const [gameState, setGameState] = useState('playing'); // 'playing', 'won'
 
   // Input State
@@ -113,6 +114,34 @@ export default function Game3() {
 
   // --- Initialization ---
   useEffect(() => {
+    const loadGlobalPlayers = async () => {
+      if (!db) return;
+      try {
+        const playersQuery = collectionGroup(db, 'jugadores');
+        // Use a longer timeout for the global fetch as it might be larger
+        const querySnapshot = await withTimeout(getDocs(playersQuery), 5000);
+
+        const players = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                nombre: data.nombre,
+                // Use teamId from data or fallback to parent doc ID (teamId)
+                // path is Jugadores/{teamId}/jugadores/{playerId}
+                teamId: data.teamId || doc.ref.parent.parent?.id,
+                posiciones: data.posiciones,
+                slug: data.slug
+            };
+        });
+
+        // Remove duplicates if any (based on name + team)
+        const uniquePlayers = Array.from(new Map(players.map(p => [p.nombre + p.teamId, p])).values());
+        setAllPlayers(uniquePlayers);
+      } catch (error) {
+        console.error("Error fetching global players:", error);
+      }
+    };
+
+    loadGlobalPlayers();
     initGame();
   }, []);
 
@@ -233,11 +262,11 @@ export default function Game3() {
     const val = e.target.value;
     setInputVal(val);
 
-    // Predictive Search: Show suggestions starting from the first letter
-    if (val.length > 0 && squad.length > 0) {
+    // Predictive Search: Show suggestions from ALL players (Global)
+    if (val.length > 0 && allPlayers.length > 0) {
       const normalizedInput = normalizeText(val);
 
-      const filtered = squad.filter(player => {
+      const filtered = allPlayers.filter(player => {
           const normalizedName = normalizeText(player.nombre);
           // Rule: Input must match the start of ANY word in the full name
           const words = normalizedName.split(' ');
@@ -246,7 +275,12 @@ export default function Game3() {
       .slice(0, 5)
       .map(p => p.nombre);
 
-      setSuggestions(filtered);
+      // Unique suggestions (in case same name in multiple teams, show once? Or name is enough?)
+      // Requirement says "The user must guess if the player belongs to the active team"
+      // So simple name suggestions are fine.
+      const uniqueSuggestions = [...new Set(filtered)];
+
+      setSuggestions(uniqueSuggestions);
       setShowSuggestions(true);
     } else {
       setSuggestions([]);
@@ -321,16 +355,26 @@ export default function Game3() {
         shieldUrl: getShieldUrl(playerTeam)
       };
 
-      if (matchingSlots.length === 1) {
-        // Only one option, auto-fill
-        fillSlot(matchingSlots[0].id, playerObj);
+      // Smart Placement Logic ("Ambiguity Rule")
+      // Group matching slots by their role
+      const slotsByRole = matchingSlots.reduce((acc, slot) => {
+        if (!acc[slot.role]) acc[slot.role] = [];
+        acc[slot.role].push(slot);
+        return acc;
+      }, {});
+
+      const uniqueRoles = Object.keys(slotsByRole);
+
+      // If all slots are for the same role, auto-fill the first one
+      if (uniqueRoles.length === 1) {
+         fillSlot(matchingSlots[0].id, playerObj);
       } else {
-        // Multiple options, trigger selector
-        setPositionSelector({
-          visible: true,
-          player: playerObj,
-          validSlots: matchingSlots
-        });
+         // Multiple different roles available -> Show selector
+         setPositionSelector({
+            visible: true,
+            player: playerObj,
+            validSlots: matchingSlots
+         });
       }
 
       setInputVal('');
@@ -560,29 +604,37 @@ export default function Game3() {
                         )}
                     </form>
 
-                    {/* Position Selector Overlay */}
+                    {/* Position Selector UI (Moved below input) */}
+                    <AnimatePresence>
                     {positionSelector.visible && (
-                        <div className="absolute inset-x-0 bottom-full mb-4 bg-surface border border-white/10 rounded-xl p-4 shadow-2xl z-50 mx-4">
-                             <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-white font-bold text-sm">Selecciona la posición</h3>
-                                <button onClick={() => setPositionSelector({visible:false, player:null, validSlots:[]})} className="text-gray-400 hover:text-white">
-                                    <X size={16} />
-                                </button>
-                             </div>
-                             <p className="text-xs text-gray-400 mb-3">¿En qué posición quieres ubicar a <span className="text-primary">{positionSelector.player?.nombre}</span>?</p>
-                             <div className="grid grid-cols-2 gap-2">
-                                 {positionSelector.validSlots.map(slot => (
-                                     <button
-                                        key={slot.id}
-                                        onClick={() => handleSelectorSelection(slot.id)}
-                                        className="bg-navy/50 hover:bg-primary/20 border border-white/10 hover:border-primary/50 rounded-lg p-2 text-center transition-all"
-                                     >
-                                         <span className="block text-primary font-bold">{slot.role}</span>
-                                     </button>
-                                 ))}
-                             </div>
-                        </div>
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden mt-3"
+                        >
+                            <div className="bg-navy/50 border border-white/10 rounded-xl p-3">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h3 className="text-white font-bold text-xs">Selecciona la posición</h3>
+                                    <button onClick={() => setPositionSelector({visible:false, player:null, validSlots:[]})} className="text-gray-400 hover:text-white">
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {positionSelector.validSlots.map(slot => (
+                                        <button
+                                            key={slot.id}
+                                            onClick={() => handleSelectorSelection(slot.id)}
+                                            className="bg-surface hover:bg-primary/20 border border-white/10 hover:border-primary/50 rounded-lg py-2 px-1 text-center transition-all"
+                                        >
+                                            <span className="block text-primary font-bold text-sm">{slot.role}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </motion.div>
                     )}
+                    </AnimatePresence>
 
                     {/* Feedback Toast */}
                     <AnimatePresence>
