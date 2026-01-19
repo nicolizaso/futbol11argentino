@@ -160,7 +160,7 @@ export default function Game3() {
       setSlots(initialSlots);
 
       // 2. Fetch Teams
-      let teams = shieldsData; // Start with fallback
+      let teams = Array.isArray(shieldsData) ? shieldsData : []; // Start with fallback (Robust)
       try {
         if (db) {
             const teamsSnapshot = await getDocs(collection(db, "equipos"));
@@ -171,6 +171,9 @@ export default function Game3() {
       } catch (e) {
         console.warn("Using fallback teams list", e);
       }
+
+      if (teams.length === 0) teams = ['Argentina']; // Ensure at least one team exists
+
       setTeamsList(teams);
 
       // 3. Pick Initial Team
@@ -266,14 +269,19 @@ export default function Game3() {
       }
 
       // 2. Verify Team
-      if (playerData.equipo && playerData.equipo !== activeTeam.name) {
-         console.warn("Player found in correct subcollection but 'equipo' field mismatch", playerData);
+      // Mapeo flexible: equipo (legacy) o teamId (nuevo seeder)
+      const playerTeam = playerData.equipo || playerData.teamId;
+      if (playerTeam && playerTeam !== activeTeam.name) {
+         console.warn("Player found in correct subcollection but 'teamId/equipo' field mismatch", playerData);
+         // Opcional: Podríamos rechazarlo aquí, pero si está en la subcolección correcta, confiamos en la ruta.
       }
 
       // 3. Verify Position & Find Slot
-      const playerPositions = Array.isArray(playerData.posicion)
-        ? playerData.posicion
-        : (playerData.posicion ? [playerData.posicion] : (playerData.position ? [playerData.position] : ['MC']));
+      // Handle both 'posiciones' (new seeder, array) and 'posicion'/'position' (legacy/fallback)
+      const rawPositions = playerData.posiciones || playerData.posicion || playerData.position;
+      const playerPositions = Array.isArray(rawPositions)
+        ? rawPositions
+        : (rawPositions ? [rawPositions] : ['MC']);
 
       const matchingSlots = slots.filter(slot =>
         !slot.filled && playerPositions.some(posCode => ROLE_MAP[posCode] === slot.role || posCode === slot.role)
@@ -289,8 +297,8 @@ export default function Game3() {
       // 4. Fill Slot or Show Selector
       const playerObj = {
         nombre: playerData.nombre,
-        equipo: playerData.equipo,
-        shieldUrl: getShieldUrl(playerData.equipo)
+        equipo: playerTeam, // Use the resolved team ID
+        shieldUrl: getShieldUrl(playerTeam)
       };
 
       if (matchingSlots.length === 1) {
