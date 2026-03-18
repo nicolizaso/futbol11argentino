@@ -28,7 +28,7 @@ export default function Home() {
 
       <main className="flex-grow">
         {/* Games Grid */}
-        <section className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-12">
+        <section className="max-w-7xl mx-auto px-2 sm:px-6 py-12">
             <div className="flex items-center justify-between mb-8">
                 <h2 className="text-2xl md:text-3xl font-bold font-heading">
                     Nuestros <span className="text-primary">Juegos</span>
@@ -38,7 +38,7 @@ export default function Home() {
                 </span>
             </div>
 
-            <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-2 sm:gap-6">
+            <div className="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-2 sm:gap-6">
                 {games.map((game, index) => (
                     <GameCard key={game.id} game={game} index={index} />
                 ))}
